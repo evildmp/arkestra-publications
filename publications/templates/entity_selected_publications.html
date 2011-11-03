@@ -1,0 +1,14 @@
+{% load publications_tags %}
+{% if selected_publications %}
+{% regroup selected_publications by get_publication_year as publicationdates %}
+{% if heading %}<{{ heading }}>Publications</{{ heading }}>{% endif %}
+
+<ul class = "publications">
+	{% for publication in selected_publications %}
+		<li>{% include publication.template %}</li>
+	{% endfor %}
+</ul>
+<ul class = "linkIcon">
+    <li><a href = "{{ entity.get_absolute_url }}publications/">All {{ real_entity }} publications</a></li>
+</ul>
+{% endif %}

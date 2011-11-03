@@ -1,0 +1,28 @@
+{% load publications_tags %}
+	<h3 id = "index">Index of publications</h3>
+	<ul class = "none">
+		{% for publication_set in collected_publications %}
+		{% regroup publication_set.publications by get_publication_year as publicationdates %}
+			<li>
+				<strong><a href ="#{{ publication_set.kind }}">{{ publication_set.name }}</a></strong>
+				<ul class = "horizontal">
+					{% for date in publicationdates %}
+						<li><a href = "#{{ publication_set.kind }}-{{ date.grouper }}">{{ date.grouper }}</a></li>
+					{% endfor %}
+				</ul>
+			</li>
+		{% endfor %}
+	</ul>
+	
+	{% for publication_set in collected_publications %}
+		{% regroup publication_set.publications by get_publication_year as publicationdates %}
+		<h3 id = "{{ publication_set.kind }}">{{ publication_set.name }}</h3>
+		<dl class = "publications">
+			{% for date in publicationdates %}
+				<dt id = "{{ publication_set.kind }}-{{ date.grouper }}">{{ date.grouper }}</dt>
+	        	{% for publication in date.list %}
+					<dd>{% include publication_set.template_name %}</dd>
+				{% endfor %}
+			{% endfor %}
+		</dl>
+	{% endfor %}

@@ -1,0 +1,18 @@
+<cite class = "{{ publication_set.kind }}">
+    {% if publication.get_url %}
+        <a href = "{{ publication.get_url }}"><strong>{{ publication.title }}</strong></a>
+	{% else %}<strong>{{ publication.title }}</strong>
+	{% endif %}
+</cite>
+{% if publication.edition %}, {{ publication.edition }}{% endif %}
+<br />
+{% if publication.editors %}
+    Edited by {{ publication.editors }}
+{% else %}
+    {{publication.authors }}
+{% endif %}
+<span class = "publication-details">
+    {% if publication.publisher %}{{ publication.publisher }}{% endif %}
+    {% if publication.get_publication_date %}({{ publication.get_publication_date }}){% endif %}
+    {% if publication.place_of_publication %}{{ publication.place_of_publication }}{% endif %}
+</span>

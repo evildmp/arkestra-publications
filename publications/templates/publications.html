@@ -1,0 +1,20 @@
+{% if selected_publications %}
+	{% regroup selected_publications by get_publication_year as publicationdates %}
+	{% if heading_level %}<h{{ heading_level }}>{{ heading }}</h{{ heading_level }}>{% endif %}
+	<ul class = "publications">
+		{% for publication in selected_publications %}
+			<li>{% include publication.template %}</li>
+		{% endfor %}
+	
+		{% if more_publications %}
+			<li><strong><a class = "linkIcon" href = "{{real_entity.get_absolute_url}}publications/">More {{ real_entity.short_name }} publications</a></strong></li>
+		{% endif %}
+	
+		{% if more_publications_link %}
+			{% ifnotequal real_entity more_publications_link %}
+				<li><strong><a class = "linkIcon" href = "{{more_publications_link.get_absolute_url}}publications/">All publications in {{ more_publications_link.short_name }}</a></strong></li>
+			{% endifnotequal %}
+		{% endif %}
+
+	</ul>
+{% endif %}

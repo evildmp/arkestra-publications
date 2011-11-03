@@ -1,0 +1,9 @@
+{% load publications_tags %}
+{% if selected_publications %}
+{% regroup selected_publications by get_publication_year as publicationdates %}
+<ul class = "publications">
+	{% for publication in selected_publications %}
+		<li>{% include publication.template %}</li>
+	{% endfor %}
+</ul>
+{% endif %}
