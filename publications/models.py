@@ -8,6 +8,7 @@ from contacts_and_people.models import Person, Entity
 
 #from cms.models import CMSPlugin
 CMSPlugin = models.get_model('cms', 'CMSPlugin')
+from cms.models.fields import PlaceholderField
 
 
 
@@ -32,6 +33,14 @@ class Researcher(models.Model):
       )
     research_synopsis = models.TextField(null = True, blank = True)
     research_description = models.TextField(blank = True, null = True)
+
+    synopsis = PlaceholderField('body', 
+        related_name="research_synopsis",
+        help_text="research_synopsis")
+    
+    description = PlaceholderField('body', 
+        related_name="research_description",
+        help_text="research_description")
 
   #symplectic specific info
     publishes = models.BooleanField(default=False, help_text="Shows 'Research' and 'Publications' tabs on Personal Profile Page", verbose_name="Research Active",)

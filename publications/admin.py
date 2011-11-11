@@ -4,10 +4,16 @@ import models
 from django.contrib import admin
 from django import forms
 
+from cms.admin.placeholderadmin import PlaceholderAdmin
+from widgetry.tabs.placeholderadmin import ModelAdminWithTabsAndCMSPlaceholder
+
 # for the WYMeditor fields
 from arkestra_utilities.widgets.wym_editor import WYMEditor
 
 from arkestra_utilities.mixins import AutocompleteMixin
+
+from contacts_and_people.admin import PersonAdmin
+from contacts_and_people.models import Person
 
 
 class ResearcherForm(forms.ModelForm):
@@ -61,20 +67,42 @@ class ResearcherAdmin(AutocompleteMixin, admin.ModelAdmin):
         )
 admin.site.register(models.Researcher, ResearcherAdmin)
     
+from django.contrib.admin.widgets import AdminURLFieldWidget
+from django.forms.widgets import Widget
+from django.db.models import URLField
+from django.utils.safestring import mark_safe
 
+
+class ButtonLinkWidget(Widget):
+    def render(self, name, value, attrs=None):
+        print value
+        return mark_safe(u'<input type="button" value="View Link" onclick="window.open(\'http://example.com/\')" />')
+                            
     
 class ResearcherInlineForm(forms.ModelForm):
     class Meta:
         model = models.Researcher
     research_synopsis = forms.CharField(widget=WYMEditor, required=False)
     research_description = forms.CharField(widget=WYMEditor, required=False)
-
+    # buttonlink = forms.Field(widget=ButtonLinkWidget)    
+    
 class ResearcherInline(admin.StackedInline):
+    # def get_form(self, request, obj=None, **kwargs):
+    #     form_class = super(ResearcherInline, self).get_form(request, obj, **kwargs)
+    #     form_class.buttonlink = forms.Field(widget=ButtonLinkWidget)
+    #     return form_class
+        
+    
     fieldsets = (
         ('Research', {
-            'fields': ('publishes', 'research_synopsis', 'research_description', ),            
+            'fields': ('publishes', 'research_synopsis', 'research_description'),            
         },),     
     )    
     form = ResearcherInlineForm    
     model = models.Researcher
-    template = "admin/publications/edit_inline/single_stacked.html"        
+    # template = "admin/publications/edit_inline/single_stacked.html"        
+            
+# print "PersonAdmin.tabs", PersonAdmin.tabs
+# 
+PersonAdmin.tabs.append(('Research', {'inlines': (ResearcherInline,)}))
+admin.site.register(Person,PersonAdmin)
