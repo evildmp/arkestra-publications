@@ -43,7 +43,7 @@ class Researcher(models.Model):
         help_text="research_description")
 
   #symplectic specific info
-    publishes = models.BooleanField(default=False, help_text="Shows 'Research' and 'Publications' tabs on Personal Profile Page", verbose_name="Research Active",)
+    publishes = models.BooleanField(default=False, help_text="Allows 'Research' and 'Publications' information to be edited and published", verbose_name="Is active in research and publishing",)
     
   #info used regarding symplectic user over the api
     symplectic_access = models.BooleanField(default=False, help_text="Symplectic API will be asked to allow this user access", verbose_name="Can login to Symplectic")  
@@ -67,7 +67,6 @@ class Researcher(models.Model):
     def remove_all_authored(self):
         self.authored.all().delete()
           
-
 
 # ***********************************************************************************************************************
 # *****  FINISH: Link to contacts_and_people.Person                                                                 *****
