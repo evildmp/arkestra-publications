@@ -17,11 +17,9 @@
 				</li>
 			{% endfor %}
 		</ul>
-
-		{% if everything.heading_level %}<h{{ everything.heading_level }}>{{ list.heading_text }}</h{{ everything.heading_level }}>{% endif %}
-
         {% endif %}
 
+		{% if everything.heading_level %}<h{{ everything.heading_level }}>{{ list.heading_text }}</h{{ everything.heading_level }}>{% endif %}
 
 			{% for publication_set in types %}
 				{% if list.index %}
@@ -48,16 +46,11 @@
 
 			{% endfor %}
 
-			{% if more_publications %}
-				<li><strong><a class = "linkIcon" href = "{{real_entity.get_absolute_url}}publications/">More {{ real_entity.short_name }} publications</a></strong></li>
+			{% if everything.more_publications and everything.type == "plugin" %}
+				<ul class = "close icons"><li><strong><a href = "{{ everything.more_publications }}">More {{ everything.entity.short_name }} publications</a></strong></li></ul>
 			{% endif %}
 
 
-			{% if more_publications_link %}
-				{% ifnotequal real_entity more_publications_link %}
-					<li><strong><a class = "linkIcon" href = "{{more_publications_link.get_absolute_url}}publications/">All publications in {{ more_publications_link.short_name }}</a></strong></li>
-				{% endifnotequal %}
-			{% endif %}
 
 		{% include "arkestra/universal_other_items_for_main_page.html" %}
 	{% endif %}

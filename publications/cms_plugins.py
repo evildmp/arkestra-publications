@@ -87,7 +87,7 @@ class CMSPublicationsPlugin(ArkestraGenericPlugin, CMSPluginBase):
         publications["links_to_other_items"] = self.other_links        
         
         # get the heading text from the plugin if supplied
-        publications["heading_text"] = getattr(instance, "heading_text", "Publications")
+        publications["heading_text"] = getattr(instance, "publications_heading_text", "Publications")
   
         # when running as type "menu", don't trouble the database - it takes too long
         if instance.type == "menu":
@@ -123,9 +123,12 @@ class CMSPublicationsPlugin(ArkestraGenericPlugin, CMSPluginBase):
                 elif instance.type == "main_page" or instance.favourites_only:
                     pubs = all_publications.filter(authored__is_a_favourite = True)[0:instance.limit_to]
             
-                # set the more_publications flag
-                instance.more_publications = (all_publications.count() > instance.limit_to and (instance.real_entity.website or instance.entity))
-
+                # set the more_publications flag 
+                if instance.real_entity.website and all_publications.count() > instance.limit_to:
+                    instance.more_publications = instance.real_entity.get_related_info_page_url("publications")
+                else:
+                    instance.more_publications = False
+                
                 cache.set(key, [pubs, all_publications.count(), instance.more_publications], settings.PUBLICATIONS_CACHE_DURATION, 60 * 60 * 6)
 
                 publications["items"] = pubs
@@ -145,6 +148,8 @@ class CMSPublicationsPlugin(ArkestraGenericPlugin, CMSPluginBase):
                     "title":"Publications archive",
                     "count": this_list.get("all_items_count"),
                     }]
+
+
         print "other_links", datetime.now() - start
 
     def set_limits_and_indexes(self, instance):
