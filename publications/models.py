@@ -3,6 +3,7 @@
 from django.db import models
 from django.template.defaultfilters import join, date
 from datetime import datetime
+from django.conf import settings  
 
 from contacts_and_people.models import Person, Entity
 
@@ -10,7 +11,12 @@ from contacts_and_people.models import Person, Entity
 CMSPlugin = models.get_model('cms', 'CMSPlugin')
 from cms.models.fields import PlaceholderField
 
+from arkestra_utilities.generic_models import ArkestraGenericPluginOptions
+from arkestra_utilities.output_libraries.dates import nice_date
 
+DATE_FORMAT = settings.ARKESTRA_DATE_FORMAT
+PLUGIN_HEADING_LEVELS = settings.PLUGIN_HEADING_LEVELS
+PLUGIN_HEADING_LEVEL_DEFAULT = settings.PLUGIN_HEADING_LEVEL_DEFAULT
 
 
 # @       @       @       @       @       @       @       @       @       @       @       @       @       @       @
@@ -295,6 +301,15 @@ class BibliographicRecord(models.Model):
         return publication_kinds.setdefault(self.publication.type, "Other publications")
                     
 
+    @property
+    def get_when(self):
+        """
+        get_when provides a human-readable attribute under which items can be grouped.
+        Usually, this is an easily-readble rendering of the date (e.g. "April 2010") but it can also be "Top news", for items to be given special prominence.
+        """
+        get_when = nice_date(self.get_start_date(), DATE_FORMAT["date_groups"])
+        return get_when
+
   # #citation
     # def cite(self):
         # if self.publication is not None:
@@ -517,21 +532,23 @@ class Authored(models.Model):
 # ***********************************************************************************************************************
 
 class PublicationsPlugin(CMSPlugin):
+    entity = models.ForeignKey(Entity, null=True, blank=True, 
+        help_text="Leave blank for autoselect", 
+        related_name="%(class)s_plugin")
+    heading_level = models.PositiveSmallIntegerField(choices = PLUGIN_HEADING_LEVELS, default = PLUGIN_HEADING_LEVEL_DEFAULT)
+    group_dates = models.BooleanField("Show date groups", default = True)
+    limit_to = models.PositiveSmallIntegerField("Maximum number of items", default = 5, null = True, blank = True, 
+        help_text = u"Leave blank for no limit")
     FORMATS = (
-        (0, u"Short"),
-        (1, u"Long"),
+        ("short", u"Short"),
+        ("long", u"Long"),
         )
-    HEADINGS = (
-        (0, u"No heading"),
-        (3, u"Heading 3"),
-        (4, u"Heading 4"),
-        (5, u"Heading 5"),
-        (6, u"Heading 6"),
-        )
-    entity = models.ForeignKey(Entity, null = True, blank = True, help_text = "Leave blank for autoselect", related_name = "publications_plugin")
-    format = models.IntegerField(choices = FORMATS, default = 0)
-    limit_to = models.PositiveSmallIntegerField(default = 5, null = True, blank = True, help_text = u"Leave blank for no limit")
+    format = models.CharField("Item format", max_length=25,choices = FORMATS, default = "long")    
     favourites_only = models.BooleanField(default = True)
-    heading_level = models.PositiveSmallIntegerField(choices = HEADINGS, default = 3)
     publications_heading_text = models.CharField(max_length = 50, default = "Publications")
-    more_publications_link = models.ForeignKey(Entity, null = True, blank = True, help_text = "Offer a link to all vacancies in chosen entity", related_name = "publications_plugin_link")
+
+    def sub_heading_level(self): # requires that we change 0 to None in the database
+        if self.heading_level == None: # this means the user has chosen "No heading"
+            return 6 # we need to give sub_heading_level a value
+        else:
+            return self.heading_level + 1 # so if headings are h3, sub-headings are h4

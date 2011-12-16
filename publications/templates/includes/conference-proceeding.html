@@ -1,21 +1,21 @@
+{% spaceless %}
 <cite class = "conference-proceedings">
 	{% if publication.get_url %}<a href = "{{ publication.get_url }}"><strong>{{ publication.title }}</strong></a>
 	{% else %}<strong>{{ publication.title }}</strong>
 	{% endif %}
 </cite>
 <br />{{ publication.authors }}
-{% ifequal format "Short" %}
+{% ifequal everything.format "short" %}
 	<span class = "publication-details">
 		<cite class = "journal">{{ publication.journal|lower|title }}</cite>
     </span>
 {% else %}
-	<span class = "publication-details">
-		{% if publication.location %}, {{ publication.location|lower|title }}{% endif %}
+	<span class = "publication-details">{% if publication.location %}, {{ publication.location|lower|title }}{% endif %}
 		{% if publication.start_date %}({{ publication.get_start_date }}){% endif %}
 		
-		<cite class = "journal">{{ publication.journal|lower|title }}</cite>
-		{% if publication.volume %}, Volume {{ publication.volume }}{% endif %}
-		{% if publication.issue %}, {{ publication.issue }}{% endif %}
+		<cite class = "journal">{{ publication.journal|lower|title }}</cite>{% if publication.volume %}, 
+		Volume {{ publication.volume }}{% endif %}{% if publication.issue %}, 
+		{{ publication.issue }}{% endif %}
     	{% if publication.get_publication_date %}({{ publication.get_publication_date }}){% endif %}
     	{% if publication.begin_page %}
 			{% if publication.end_page %}pp.{{ publication.begin_page }}-{{publication.end_page}}{% else %}p. {{ publication.begin_page }}
@@ -26,3 +26,5 @@
 {% if publication.editors %}
     Edited by {{ publication.editors }}
 {% endif %}
+{% endspaceless %}
+

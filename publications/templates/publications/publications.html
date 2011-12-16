@@ -1,0 +1,67 @@
+{% for list in everything.lists %}
+	{% if list.items %}
+
+		{% regroup list.items by kind as types %}
+		{% if list.index %}
+		<h3 id = "index">Index of publications</h3>
+		<ul>
+			{% for publication_set in types %}
+				<li>
+					<strong><a href ="#{{ publication_set.grouper|slugify }}">{{ publication_set.grouper }}</a></strong>
+					<ul class = "horizontal grid">
+						{% regroup publication_set.list by get_publication_year as publicationdates %}
+						{% for date in publicationdates %}
+							<li><a href = "#{{ publication_set.grouper|slugify }}-{{ date.grouper }}">{{ date.grouper }}</a></li>
+						{% endfor %}
+					</ul>
+				</li>
+			{% endfor %}
+		</ul>
+
+		{% if everything.heading_level %}<h{{ everything.heading_level }}>{{ list.heading_text }}</h{{ everything.heading_level }}>{% endif %}
+
+        {% endif %}
+
+
+			{% for publication_set in types %}
+				{% if list.index %}
+					<h{{ everything.heading_level|add:"1" }} id = "{{ publication_set.grouper|slugify }}">{{ publication_set.grouper }}</h{{ everything.heading_level|add:"1" }}>
+    				<ul class="{{ everything.list_format}} plugin-list">
+						{% regroup publication_set.list by get_publication_year as publicationdates %}
+						{% for date in publicationdates %}
+							<li id = "{{ publication_set.grouper|slugify }}-{{ date.grouper }}">{{ date.grouper }}
+				        		<ul>
+									{% for publication in date.list %}
+										<li>{% include publication.template %}</li>
+									{% endfor %}
+								</ul>
+							</li>
+						{% endfor %}
+					</ul>
+				{% else %}
+    				<ul class="{{ everything.list_format}} plugin-list">
+						{% for publication in publication_set.list %}
+							<li>{% include publication.template %}</li>
+						{% endfor %}
+					</ul>
+				{% endif %}
+
+			{% endfor %}
+
+			{% if more_publications %}
+				<li><strong><a class = "linkIcon" href = "{{real_entity.get_absolute_url}}publications/">More {{ real_entity.short_name }} publications</a></strong></li>
+			{% endif %}
+
+
+			{% if more_publications_link %}
+				{% ifnotequal real_entity more_publications_link %}
+					<li><strong><a class = "linkIcon" href = "{{more_publications_link.get_absolute_url}}publications/">All publications in {{ more_publications_link.short_name }}</a></strong></li>
+				{% endifnotequal %}
+			{% endif %}
+
+		{% include "arkestra/universal_other_items_for_main_page.html" %}
+	{% endif %}
+{% endfor %}
+
+    {% include "arkestra/universal_other_items_for_sub_page.html" %}
+    {% include "arkestra/universal_other_items_for_plugin.html" %}
