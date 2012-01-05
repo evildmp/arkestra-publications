@@ -113,14 +113,14 @@ class ButtonLinkWidget(forms.widgets.Widget):
 class ResearcherInlineForm(forms.ModelForm):
     class Meta:
         model = models.Researcher
-    # research_synopsis = forms.CharField(widget=WYMEditor, required=False)
-    # research_description = forms.CharField(widget=WYMEditor, required=False)
+    # a button to link to admin:publications_researcher_change for this person
     buttonlink = forms.Field(
         widget=ButtonLinkWidget, 
         required = False, 
         label = "Research profile", 
         help_text = "Once this Person has been saved, research-related information can be edited.")    
  
+    # and put some values on the button
     def __init__(self, *args, **kwargs):
         super(ResearcherInlineForm, self).__init__(*args, **kwargs)
         # Set the form fields based on the model object
@@ -141,10 +141,10 @@ class ResearcherInline(admin.StackedInline):
             researcher = obj.researcher
         # can't get researcher?
         except (models.Researcher.DoesNotExist, AttributeError):
-            # remove the buttonlink if present
+            # then remove the buttonlink if it's present
             if 'buttonlink' in self.fields:
                 self.fields.remove("buttonlink")
-        # we can get a researcher
+        # but if we can get a researcher
         else:
             # researcher.publishes but no buttonlink? add a buttonlink
             if not 'buttonlink' in self.fields and researcher.publishes:
@@ -160,6 +160,7 @@ class ResearcherInline(admin.StackedInline):
     model = models.Researcher
 
             
+# unregister and then re-register the PersonAdmin, to accommodate our messing about above
 admin.site.unregister(Person)
 PersonAdmin.tabs.append(('Research', {'inlines': (ResearcherInline,)}))
 admin.site.register(Person,PersonAdmin)
