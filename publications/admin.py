@@ -12,7 +12,7 @@ from widgetry.tabs.placeholderadmin import ModelAdminWithTabsAndCMSPlaceholder
 # for the WYMeditor fields
 from arkestra_utilities.widgets.wym_editor import WYMEditor
 
-from arkestra_utilities.mixins import AutocompleteMixin
+from arkestra_utilities.admin_mixins import AutocompleteMixin
 
 from contacts_and_people.admin import PersonAdmin
 from contacts_and_people.models import Person

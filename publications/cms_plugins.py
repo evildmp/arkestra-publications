@@ -8,7 +8,7 @@ from cms.plugin_base import CMSPluginBase
 from cms.plugin_pool import plugin_pool
 
 from arkestra_utilities.generic_models import ArkestraGenericPlugin, ArkestraGenericPluginForm
-from arkestra_utilities.mixins import AutocompleteMixin
+from arkestra_utilities.admin_mixins import AutocompleteMixin
 
 from contacts_and_people.templatetags.entity_tags import work_out_entity
 
