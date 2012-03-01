@@ -35,7 +35,8 @@ class Researcher(models.Model):
   #one-to-one link to contacts_and_people.Person
     person = models.OneToOneField(
       'contacts_and_people.Person', 
-      primary_key = True, related_name = "researcher",
+      primary_key = True, related_name = "researcher", 
+      help_text="Do not under any circumstances change this field. No, really. Don't touch this.",
       )
     research_synopsis = models.TextField(null = True, blank = True)
     research_description = models.TextField(blank = True, null = True)

@@ -6,11 +6,7 @@ from django import forms
 
 from django.core import urlresolvers
 
-from cms.admin.placeholderadmin import PlaceholderAdmin
 from widgetry.tabs.placeholderadmin import ModelAdminWithTabsAndCMSPlaceholder
-
-# for the WYMeditor fields
-from arkestra_utilities.widgets.wym_editor import WYMEditor
 
 from arkestra_utilities.admin_mixins import AutocompleteMixin
 
@@ -49,31 +45,28 @@ class ResearcherAdmin(AutocompleteMixin, ModelAdminWithTabsAndCMSPlaceholder):
     media = property(_media)
 
     actions = None
-    research_fieldset = ('Research', {
-            'fields': ('publishes', 'synopsis', 'description'),            
+    basic_fieldset = (None, {
+            'fields': ('publishes', ),            
+        },)
+    synopsis_fieldset = ('Brief synopsis of research', {
+            'fields': ('synopsis',),            
+            'classes': ('plugin-holder', 'plugin-holder-nopage',)
+        },)
+    description_fieldset = ('Fuller research description', {
+            'fields': ('description'),            
+            'classes': ('plugin-holder', 'plugin-holder-nopage',)
         },)
     advanced_fieldset = ('Symplectic (Advanced Options)', {
-            'fields': ('symplectic_access', 'symplectic_id', ),            
+            'fields': ('symplectic_access', 'symplectic_id', 'person'),            
             'classes': ('xcollapsed',),
         },)
         
-    fieldsets = (
-        ('Person', {
-            'fields': ('person',),            
-        },),    
-        ('Research', {
-            'fields': ('publishes', 'synopsis', 'description'),            
-        },),
-        ('Symplectic (Advanced Options)', {
-            'fields': ('symplectic_access', 'symplectic_id', ),            
-            'classes': ('xcollapsed',),
-        },),        
-    )  
     tabs = (
-            ('Research', {'fieldsets': (research_fieldset,)}),
+            ('Research', {'fieldsets': (basic_fieldset, synopsis_fieldset,description_fieldset)}),
             ('Advanced Options', {'fieldsets': (advanced_fieldset,)}),        
         )
 
+    # readonly_fields=["person",]
     list_display = ('person', 'publishes', 'symplectic_access',)
     list_editable = ('publishes', 'symplectic_access',)
     list_filter = ('publishes', 'symplectic_access',)
@@ -87,12 +80,12 @@ class ResearcherAdmin(AutocompleteMixin, ModelAdminWithTabsAndCMSPlaceholder):
     #     return ForeignKeySearchInput.overridden_formfield_for_dbfield(self, db_field, ResearcherAdmin, **kwargs) 
 
 
-    class Media:
-        js = (
-            '/media/javascript/jquery/jquery.js',
-            '/media/javascript/jquery/ui/ui.core.js',
-            '/media/javascript/jquery/ui/ui.tabs.js',
-        )
+    # class Media:
+    #     js = (
+    #         '/media/javascript/jquery/jquery.js',
+    #         '/media/javascript/jquery/ui/ui.core.js',
+    #         '/media/javascript/jquery/ui/ui.tabs.js',
+    #     ) 
 admin.site.register(models.Researcher, ResearcherAdmin)
     
 from django.contrib.admin.widgets import AdminURLFieldWidget
