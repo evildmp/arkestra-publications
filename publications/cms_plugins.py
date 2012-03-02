@@ -71,7 +71,7 @@ class CMSPublicationsPlugin(ArkestraGenericPlugin, CMSPluginBase):
         return
 
     def get_items(self, instance):
-        start = datetime.now()
+        # start = datetime.now()
         super(CMSPublicationsPlugin, self).get_items(instance)
         
         # work out real entity
@@ -135,11 +135,11 @@ class CMSPublicationsPlugin(ArkestraGenericPlugin, CMSPluginBase):
                 publications["all_items_count"] = all_publications.count()
     
         self.lists = [publications,]
-        print "get_items", datetime.now() - start
+        # print "get_items", datetime.now() - start
         
     # called by add_links_to_other_items()
     def other_links(self, instance, this_list):
-        start = datetime.now()
+        # start = datetime.now()
         this_list["other_items"] = []
         if this_list["items"] and instance.view == "current":
             if instance.more_publications:
@@ -150,17 +150,17 @@ class CMSPublicationsPlugin(ArkestraGenericPlugin, CMSPluginBase):
                     }]
 
 
-        print "other_links", datetime.now() - start
+        # print "other_links", datetime.now() - start
 
     def set_limits_and_indexes(self, instance):
-        start = datetime.now()
+        # start = datetime.now()
         for this_list in self.lists:
             # extract a list of dates for the index
             this_list["no_of_get_whens"] = len(set(getattr(item, "get_when", None) for item in this_list["items"]))
             # more than one date in the list: show an index
             if instance.view == "archive" and this_list["no_of_get_whens"] > 1:
                 this_list["index"] = True
-        print "set_limits_and_indexes", datetime.now() - start
+        # print "set_limits_and_indexes", datetime.now() - start
 
     def icon_src(self, instance):
         return "/static/plugin_icons/publications_plugin.png"   

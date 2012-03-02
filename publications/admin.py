@@ -53,7 +53,7 @@ class ResearcherAdmin(AutocompleteMixin, ModelAdminWithTabsAndCMSPlaceholder):
             'classes': ('plugin-holder', 'plugin-holder-nopage',)
         },)
     description_fieldset = ('Fuller research description', {
-            'fields': ('description'),            
+            'fields': ('description',),            
             'classes': ('plugin-holder', 'plugin-holder-nopage',)
         },)
     advanced_fieldset = ('Symplectic (Advanced Options)', {
