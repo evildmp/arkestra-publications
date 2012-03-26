@@ -15,11 +15,11 @@ class Command(BaseCommand):
             try:
                 print researcher
             except (Exception,), err:
-                self.stdout.write('I am terribly sorry, there has been an error with researcher: %s %s\n' % (researcher.person.id, err))
+                self.stdout.write('Error with researcher: %s %s\n' % (researcher.person.id, err))
             try:
                 SymplecticXMLAuthored.getAuthoredFromSymplectic(researcher)
             except (Exception,), err:
-                self.stdout.write('I am terribly sorry, there has been an error on line 20: %s\n' % err)
+                self.stdout.write('I ignored this researcher: %s\n' % (researcher, err))
 
         self.stdout.write('Mark modified publications\n')
         twodaysago = datetime.date.today() - datetime.timedelta(2)
@@ -33,6 +33,6 @@ class Command(BaseCommand):
                 self.stdout.write(str(publication) + "\n")
                 SymplecticXMLPubs.updatePublicationFromSymplectic(publication)
             except (Exception,), err:
-                self.stdout.write('I am terribly sorry, there has been an error : %s\n' % err)
+                self.stdout.write('Issue with %s : %s\n' % (publication, err))
 
         self.stdout.write('Got all Publications\n')
