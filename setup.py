@@ -12,4 +12,7 @@ setup(
     license='LICENCE.txt',
     description='Symplectic Publications integration & output for Arkestra',
     long_description=open(join(dirname(__file__), 'README.txt')).read(),
+    install_requires=[
+        'elementtree',
+    ]
 )      
