@@ -19,7 +19,7 @@ class Command(BaseCommand):
             try:
                 SymplecticXMLAuthored.getAuthoredFromSymplectic(researcher)
             except (Exception,), err:
-                self.stdout.write('I ignored this researcher: %s\n' % (researcher, err))
+                self.stdout.write('I ignored this researcher: %s %s\n' % (researcher, err))
 
         self.stdout.write('Mark modified publications\n')
         twodaysago = datetime.date.today() - datetime.timedelta(2)
