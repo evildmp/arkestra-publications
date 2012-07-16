@@ -24,7 +24,7 @@ class Command(BaseCommand):
           #create users
           self.stdout.write('Creating users\n')
           access_list = Researcher.objects.filter(symplectic_access=True)
-          self.stdout.write('    number of users: %s\n' % len(access_list))
+          self.stdout.write('   number of users: %s\n' % len(access_list))
 
           #for user in access_list:
           #  try:
@@ -36,10 +36,10 @@ class Command(BaseCommand):
 
           #retrieve users guid
           self.stdout.write('Retrieving users\n')
-          missing_list = Researcher.objects.filter(symplectic_access=True).filter( Q(symplectic_id__isnull=True) | Q(symplectic_id__exact='') )
-          guid_list = SymplecticXMLRetrieveUser.askSymplecticForUsersGUID(missing_list)
-          for guid in guid_list:
-              self.stdout.write(guid)
+          missing_list = Researcher.objects.filter(symplectic_access=True).filter( Q(symplectic_int_id__isnull=True) | Q(symplectic_int_id__exact=0) )
+          id_list = SymplecticXMLRetrieveUser.askSymplecticForUsersID(missing_list)
+          for id in id_list:
+              self.stdout.write('   %s\n' % id)
               
         except (Exception,), err:
           self.stdout.write('I am terribly sorry, there has been an error : %s\n' % err)
