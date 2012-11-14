@@ -500,7 +500,8 @@ class Authored(models.Model):
   #override __save__ to create composite primary key
     def save(self):
         if (self.researcher is not None) and (self.publication is not None):
-            self.id = str(self.researcher.symplectic_int_id) + ':' + self.publication.guid
+            # self.id = str(self.researcher.symplectic_int_id) + ':' + self.publication.guid # int_id version
+            self.id = str(self.researcher.symplectic_id) + ':' + self.publication.guid # guid version
             super(self.__class__, self).save()
 
   #

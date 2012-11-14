@@ -36,7 +36,8 @@ class Command(BaseCommand):
 
           #retrieve users guid
           self.stdout.write('Retrieving users\n')
-          missing_list = Researcher.objects.filter(symplectic_access=True).filter( Q(symplectic_int_id__isnull=True) | Q(symplectic_int_id__exact=0) )
+          # missing_list = Researcher.objects.filter(symplectic_access=True).filter( Q(symplectic_int_id__isnull=True) | Q(symplectic_int_id__exact=0) ) # int_id version
+          missing_list = Researcher.objects.filter(symplectic_access=True).filter( Q(symplectic_id__isnull=True) | Q(symplectic_id__exact="") ) # guid version
           id_list = SymplecticXMLRetrieveUser.askSymplecticForUsersID(missing_list)
           for id in id_list:
               self.stdout.write('   %s\n' % id)

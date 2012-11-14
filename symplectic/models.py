@@ -429,7 +429,8 @@ class SymplecticXMLRetrieveUser(object):
             id = user_element.attrib.get("id")            
           #if arkestra and symplectic agree this is the same person
             if str(researcher_object.person_id) == proprietary_id:
-                researcher_object.symplectic_int_id = id
+                # researcher_object.symplectic_int_id = id # int_id version
+                researcher_object.symplectic_id = id # guid version
                 researcher_object.save()
                 #force return after 1 (should only be 1 person per xml file anyway)
                 return id      
@@ -476,11 +477,14 @@ class SymplecticXMLAuthored(object):
           Parses XML File to find all publications for that researcher & notes preferences they have for each publication
         """
       #checking
-        if not(researcher_object) or (researcher_object.symplectic_int_id is None):
+        # if not(researcher_object) or (researcher_object.symplectic_int_id is None): # int_id version
+        if not(researcher_object) or (researcher_object.symplectic_id is None): # guid version
             return
       #symplectic api url and local file path
-        url = SYMPLECTIC_API_URL + 'users/' + str(researcher_object.symplectic_int_id)
-        tmp_filename = SYMPLECTIC_LOCAL_XML_FOLDER + SYMPLECTIC_LOCAL_AUTH_FOLDER + str(researcher_object.symplectic_int_id) + '.xml'
+        # url = SYMPLECTIC_API_URL + 'users/' + str(researcher_object.symplectic_int_id) # int_id version
+        url = SYMPLECTIC_API_URL + 'users/' + str(researcher_object.symplectic_id) # guid version
+        # tmp_filename = SYMPLECTIC_LOCAL_XML_FOLDER + SYMPLECTIC_LOCAL_AUTH_FOLDER + str(researcher_object.symplectic_int_id) + '.xml' # int_id version
+        tmp_filename = SYMPLECTIC_LOCAL_XML_FOLDER + SYMPLECTIC_LOCAL_AUTH_FOLDER + str(researcher_object.symplectic_id) + '.xml' # guid version
       #get xml document from symplectic api and store on hd
         (tmp_filename, http_headers,) = urllib.urlretrieve(url, tmp_filename)
       #parse xml file
