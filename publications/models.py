@@ -14,9 +14,7 @@ from cms.models.fields import PlaceholderField
 from arkestra_utilities.generic_models import ArkestraGenericPluginOptions
 from arkestra_utilities.output_libraries.dates import nice_date
 
-DATE_FORMAT = settings.ARKESTRA_DATE_FORMAT
-PLUGIN_HEADING_LEVELS = settings.PLUGIN_HEADING_LEVELS
-PLUGIN_HEADING_LEVEL_DEFAULT = settings.PLUGIN_HEADING_LEVEL_DEFAULT
+from arkestra_utilities.settings import PLUGIN_HEADING_LEVELS, PLUGIN_HEADING_LEVEL_DEFAULT, DATE_FORMAT
 
 
 # @       @       @       @       @       @       @       @       @       @       @       @       @       @       @
