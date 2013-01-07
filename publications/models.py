@@ -3,7 +3,6 @@
 from django.db import models
 from django.template.defaultfilters import join, date
 from datetime import datetime
-from django.conf import settings  
 
 from contacts_and_people.models import Person, Entity
 
@@ -13,10 +12,8 @@ from cms.models.fields import PlaceholderField
 
 from arkestra_utilities.generic_models import ArkestraGenericPluginOptions
 from arkestra_utilities.output_libraries.dates import nice_date
+from arkestra_utilities.settings import DATE_FORMAT, PLUGIN_HEADING_LEVELS, PLUGIN_HEADING_LEVEL_DEFAULT
 
-DATE_FORMAT = settings.ARKESTRA_DATE_FORMAT
-PLUGIN_HEADING_LEVELS = settings.PLUGIN_HEADING_LEVELS
-PLUGIN_HEADING_LEVEL_DEFAULT = settings.PLUGIN_HEADING_LEVEL_DEFAULT
 
 
 # @       @       @       @       @       @       @       @       @       @       @       @       @       @       @

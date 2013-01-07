@@ -112,7 +112,7 @@ def get_all_entity_publications(context, entity = None):
     if entity == None:
         entity = work_out_entity(context, entity)
     if entity.abstract_entity:
-        real_entity = entity.get_real_ancestor()
+        real_entity = entity._get_real_ancestor
     else: 
         real_entity = entity
     all_publications = BibliographicRecord.objects.filter(
@@ -140,7 +140,7 @@ def get_selected_entity_publications(context, heading=None, format = "short", ma
     if entity == None:
         entity = work_out_entity(context, entity)
     if entity.abstract_entity:
-        real_entity = entity.get_real_ancestor()
+        real_entity = entity._get_real_ancestor
     else: 
         real_entity = entity
     all_publications = BibliographicRecord.objects.filter(authored__visible = True,

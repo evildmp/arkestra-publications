@@ -2,7 +2,7 @@ from django import forms
 from django.db.models import Q
 from django.utils.translation import ugettext as _
 from django.core.cache import cache
-from django.conf import settings
+from publications.settings import PUBLICATIONS_CACHE_DURATION
 
 from cms.plugin_base import CMSPluginBase
 from cms.plugin_pool import plugin_pool
@@ -76,7 +76,7 @@ class CMSPublicationsPlugin(ArkestraGenericPlugin, CMSPluginBase):
         
         # work out real entity
         if instance.entity.abstract_entity:
-            instance.real_entity = instance.entity.get_real_ancestor()
+            instance.real_entity = instance.entity._get_real_ancestor
         else: 
             instance.real_entity = instance.entity
 
@@ -129,7 +129,7 @@ class CMSPublicationsPlugin(ArkestraGenericPlugin, CMSPluginBase):
                 else:
                     instance.more_publications = False
                 
-                cache.set(key, [pubs, all_publications.count(), instance.more_publications], settings.PUBLICATIONS_CACHE_DURATION, 60 * 60 * 6)
+                cache.set(key, [pubs, all_publications.count(), instance.more_publications], PUBLICATIONS_CACHE_DURATION)
 
                 publications["items"] = pubs
                 publications["all_items_count"] = all_publications.count()
