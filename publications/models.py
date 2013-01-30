@@ -12,7 +12,7 @@ from cms.models.fields import PlaceholderField
 
 from arkestra_utilities.generic_models import ArkestraGenericPluginOptions
 from arkestra_utilities.output_libraries.dates import nice_date
-from arkestra_utilities.settings import DATE_FORMAT, PLUGIN_HEADING_LEVELS, PLUGIN_HEADING_LEVEL_DEFAULT
+from arkestra_utilities.settings import ARKESTRA_DATE_FORMATS, PLUGIN_HEADING_LEVELS, PLUGIN_HEADING_LEVEL_DEFAULT
 
 
 
@@ -305,7 +305,7 @@ class BibliographicRecord(models.Model):
         get_when provides a human-readable attribute under which items can be grouped.
         Usually, this is an easily-readble rendering of the date (e.g. "April 2010") but it can also be "Top news", for items to be given special prominence.
         """
-        get_when = nice_date(self.get_start_date(), DATE_FORMAT["date_groups"])
+        get_when = nice_date(self.get_start_date(), ARKESTRA_DATE_FORMATS["date_groups"])
         return get_when
 
   # #citation
