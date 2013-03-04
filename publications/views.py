@@ -1,18 +1,21 @@
 from django.shortcuts import render_to_response, get_object_or_404
-from django.conf import settings
 from django.template import RequestContext
 
-from contacts_and_people.models import Entity, default_entity
+from contacts_and_people.models import Entity
 
-MAIN_NEWS_EVENTS_PAGE_LIST_LENGTH = settings.MAIN_NEWS_EVENTS_PAGE_LIST_LENGTH
-IN_BODY_HEADING_LEVEL = settings.IN_BODY_HEADING_LEVEL  
+from arkestra_utilities.settings import MAIN_NEWS_EVENTS_PAGE_LIST_LENGTH, IN_BODY_HEADING_LEVEL
 
 from arkestra_utilities.generic_models import ArkestraGenericPlugin
 from cms_plugins import CMSPublicationsPlugin
 
-
 def common_settings(request, slug):
-    entity = Entity.objects.get(slug=slug) or default_entity
+    if slug:
+        try:
+            entity = Entity.objects.get(slug=slug)
+        except Entity.DoesNotExist:
+            raise Http404   
+    else:
+        entity = Entity.objects.base_entity()
     request.auto_page_url = request.path
     # request.path = entity.get_website.get_absolute_url() # for the menu, so it knows where we are
     request.current_page = entity.get_website
@@ -30,7 +33,7 @@ def common_settings(request, slug):
     return instance, context, entity
 
 
-def publications(request, slug=getattr(default_entity, "slug", None)):
+def publications(request, slug):
     instance, context, entity = common_settings(request, slug)    
 
     # general values needed to set up and construct the page and menus
@@ -63,7 +66,7 @@ def publications(request, slug=getattr(default_entity, "slug", None)):
         context,
         )
 
-def publications_archive(request, slug=getattr(default_entity,"slug", None)):
+def publications_archive(request, slug):
     instance, context, entity = common_settings(request, slug)
 
     # general values needed to set up and construct the page and menus
