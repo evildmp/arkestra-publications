@@ -57,7 +57,7 @@ class Researcher(models.Model):
     #research_overview = models.TextField(null = True)
 
     def __unicode__(self):
-        return str(self.person)    
+        return self.person.__unicode__()  
         
   #return a list of authored for this researcher
     def get_authoreds(self):
