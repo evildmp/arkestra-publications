@@ -120,7 +120,7 @@ class ResearcherInlineForm(forms.ModelForm):
         if self.instance.pk:
             instance = kwargs['instance']
             self.fields["buttonlink"].widget.attrs["link"] = urlresolvers.reverse('admin:publications_researcher_change', args=(instance.person.id,))
-            self.initial['buttonlink'] = "Edit " + str(instance.person) + "'s research profile"
+            self.initial['buttonlink'] = "Edit " + unicode(instance.person) + "'s research profile"
             self.fields["buttonlink"].help_text = "Edit research-related information in a new window."   
 
                        
