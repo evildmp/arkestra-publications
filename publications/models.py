@@ -51,7 +51,10 @@ class Researcher(models.Model):
     
   #info used regarding symplectic user over the api
     symplectic_access = models.BooleanField(default=False, help_text="Symplectic API will be asked to allow this user access", verbose_name="Can login to Symplectic")  
-    symplectic_id = models.CharField(blank=True, help_text = "Symplectic's own ID for this user to be used by API", max_length=36, null=True, verbose_name="Symplectic User ID") 
+    #Symplectic Elements v3.3.1 GUID [OLD]
+    symplectic_id = models.CharField(blank=True, help_text = "Symplectic's own GUID for this user to be used by API", max_length=36, null=True, verbose_name="Symplectic User GUID (Deprecated)") 
+    #Symplectic Elements v3.4 Integer ID [NEW]
+    symplectic_int_id = models.IntegerField(blank=True, help_text = "Symplectic's own Integer ID for this user to be used by API", null=True, verbose_name="Symplectic User ID") 
                            
     #research_brief_summary = models.TextField(null = True)
     #research_overview = models.TextField(null = True)
@@ -93,7 +96,10 @@ class Researcher(models.Model):
 class Publication(models.Model):
 
   #publication attributes
+  #Symplectic Elements v3.3.1 GUID [OLD]
     guid = models.CharField(primary_key=True, max_length=255)
+  #Symplectic Elements v3.4 Integer ID [NEW] (Introduced in v3.4 but not utilised)
+    new_id = models.IntegerField(null=True)
     is_deleted = models.BooleanField(default=False)
     type = models.CharField(max_length=255, null=True)
     created_when = models.TextField(null=True)
@@ -491,7 +497,8 @@ class Authored(models.Model):
   #override __save__ to create composite primary key
     def save(self):
         if (self.researcher is not None) and (self.publication is not None):
-            self.id = self.researcher.symplectic_id + ':' + self.publication.guid
+            # self.id = str(self.researcher.symplectic_int_id) + ':' + self.publication.guid # int_id version
+            self.id = str(self.researcher.symplectic_id) + ':' + self.publication.guid # guid version
             super(self.__class__, self).save()
 
   #

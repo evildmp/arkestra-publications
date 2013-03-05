@@ -12,19 +12,17 @@ import os
 from publications.models import Researcher, Publication, BibliographicRecord, BiblioURL, Authored
 # import ref_shared.models
 
-# @       @       @       @       @       @       @       @       @       @       @       @       @       @       @
-#  @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @
-#   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @
-#    @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @
-#     @       @       @       @       @       @       @       @       @       @       @       @       @       @       @
-
-
+# &       &       &       &       &       &       &       &       &       &       &       &       &       &       &
+#  &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &
+#   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &
+#    & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &
+#     &       &       &       &       &       &       &       &       &       &       &       &       &       &       &
 
 # ***********************************************************************************************************************
 # *****  START: Symplectic Constants                                                                                *****
 # ***********************************************************************************************************************
 
-SYMPLECTIC_API_URL = 'http://medic.cf.ac.uk:8090/publications-api/'
+SYMPLECTIC_API_URL = 'http://medic3.cardiff.ac.uk:8090/publications-api/v3.4/'
 SYMPLECTIC_XMLNS_URI = 'http://www.symplectic.co.uk/publications/api'
 SYMPLECTIC_NAMESPACE = '{' + SYMPLECTIC_XMLNS_URI + '}'
 
@@ -46,11 +44,421 @@ IMPORT_USERS_FEED_ID = 'django arkestra'
 
 
 
+# &       &       &       &       &       &       &       &       &       &       &       &       &       &       &
+#  &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &
+#   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &
+#    & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &
+#     &       &       &       &       &       &       &       &       &       &       &       &       &       &       &
+
+
+
+
+
+
+# &       &       &       &       &       &       &       &       &       &       &       &       &       &       &
+#  &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &
+#   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &
+#    & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &
+#     &       &       &       &       &       &       &       &       &       &       &       &       &       &       &
+
+
+# ***********************************************************************************************************************
+# *****  START: Symplectic Clear Users API XML                                                                      *****
+# ***********************************************************************************************************************
+
+
+class SymplecticXMLClearUser(object):
+
+
+    @staticmethod
+    def askSymplecticToClearUsers():
+      #description
+        """
+          Sends an XML File to Symplectic API asking it to clear all users
+        """
+      #
+        xml_filename = SymplecticXMLClearUser.__createXMLFileForClear()
+        symplectic_response = SymplecticXMLClearUser.__postClearUsersXMLFileToSymplectic(xml_filename)
+        cleared_count = SymplecticXMLClearUser.__extractUserClearedCountFromResponse(symplectic_response)
+        return cleared_count
+    
+    
+    
+    @staticmethod
+    def __createXMLFileForClear():
+      #description
+        """
+          PRIVATE
+          Builds an XML File to ask Symplectic to clear all users
+        """
+      #Root
+        clear_root = Element('clear-users-request', {'xmlns':SYMPLECTIC_XMLNS_URI,} )
+      #Feed
+        SubElement(clear_root, 'feed-id').text = IMPORT_USERS_FEED_ID
+      #Convert to ElementTree and write xml version to file
+        xml_filename = SYMPLECTIC_LOCAL_XML_FOLDER + SYMPLECTIC_LOCAL_USER_FOLDER + SYMPLECTIC_LOCAL_USER_CLEARFILE
+        ElementTree(clear_root).write(xml_filename)
+      #Return xml filename
+        return xml_filename
+
+        
+        
+        
+    @staticmethod
+    def __postClearUsersXMLFileToSymplectic(xml_filename):
+      #description
+        """
+          PRIVATE
+          Actually performs the HTTP POST of the XML File to Symplectic API, asking it to clear users
+        """
+      #prepare the HTTP request with the XML file of ClearUsers as the payload 
+        url = SYMPLECTIC_API_URL + 'clear-users'
+        headers = { 
+            'Content-Type' : 'text/xml',
+        }
+        xml_file = open(xml_filename, 'r')
+        data = xml_file.read()
+        req = urllib2.Request(url, data, headers)
+      #POST the HTTP request to Symplectic API
+        try:
+          response = urllib2.urlopen(req)
+          the_page = response.read()        
+          return the_page
+        except (urllib2.URLError,):
+          raise ESymplecticPostFileError("Could not HTTP POST the CLEAR Users XML file to Symplectic API")
+        
+
+
+    @staticmethod
+    def __extractUserClearedCountFromResponse(xml_string):
+      #description
+        """
+          PRIVATE
+          Extracts the count from the symplectic response to the XML file clear
+        """
+      #
+        try:
+          response_element = XML(xml_string)
+          cleared_count = response_element.attrib.get("count")
+          return cleared_count
+        except (ExpatError,):
+          raise ESymplecticParseFileError("Could not extract the number of Users cleared from the XML file returned by Symplectic API")
+        
+
+
+                
+# ***********************************************************************************************************************
+# *****  FINISH: Symplectic Clear Users API XML                                                                     *****
+# *********************************************************************************************************************** 
+
+
+
 # @       @       @       @       @       @       @       @       @       @       @       @       @       @       @
 #  @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @
 #   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @
 #    @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @
 #     @       @       @       @       @       @       @       @       @       @       @       @       @       @       @
+
+
+
+# ***********************************************************************************************************************
+# *****  START: Symplectic Create Users API XML                                                                     *****
+# ***********************************************************************************************************************
+
+
+class SymplecticXMLCreateUser(object):
+
+    def __init__(self):
+        self.title = ''
+        self.initials = ''
+        self.first_name = ''
+        self.last_name = ''
+        self.known_as = ''
+        self.suffix = ''
+        self.email = ''
+        self.authenticating_authority = ''
+        self.username = ''
+        self.proprietary_id = ''
+        self.primary_group_descriptor = ''
+        self.is_academic = ''
+        self.generic_field_1_dept = ''
+        self.generic_field_2_dept_id = ''
+        self.generic_field_11_irg = ''
+        self.generic_field_12_irg_id = ''
+        self.generic_field_13_admin = ''
+        self.generic_field_14_institute = ''
+        self.generic_field_15_institute_id = ''
+
+    
+    
+    
+    @staticmethod
+    def informSymplecticOfUsers(researcher_list):
+      #description
+        """
+          Sends an XML File of Users to Symplectic, to its API
+        """
+      #
+        symplectic_user_objectlist = SymplecticXMLCreateUser.__createSymplecticUserListFromResearcherList(researcher_list)    
+        xml_filename = SymplecticXMLCreateUser.__createXMLFileFromUserObjectList(symplectic_user_objectlist)
+        symplectic_response = SymplecticXMLCreateUser.__postUsersXMLFileToSymplectic(xml_filename)                  
+        created_count = SymplecticXMLCreateUser.__extractUserCreatedCountFromResponse(symplectic_response)
+        return created_count
+
+    
+    
+    @staticmethod
+    def __createSymplecticUserListFromResearcherList(researcher_list):
+      #description
+        """
+          PRIVATE
+          Creates a list of SymplecticXMLCreateUser objects from a list of Publications.Researcher objects
+        """
+      #
+        user_objectlist = []
+        for researcher in researcher_list:
+          #create symplectic specific user object
+            user_object = SymplecticXMLCreateUser()
+            user_object.title = str(researcher.person.title)
+            user_object.initials = researcher.person.initials
+            user_object.first_name = researcher.person.given_name
+            user_object.last_name = researcher.person.surname
+            user_object.known_as = ''
+            user_object.suffix = ''
+            user_object.email = researcher.person.email
+            user_object.authenticating_authority = AUTHENTICATING_AUTHORITY
+            user_object.username = researcher.person.institutional_username
+            user_object.proprietary_id = str(researcher.person.id)
+            user_object.primary_group_descriptor = 'MEDIC'
+            user_object.is_academic = True
+            if (researcher.symplectic_access) and (not researcher.publishes):
+                user_object.generic_field_13_admin = 'Y'
+            else:
+                user_object.generic_field_13_admin = 'N'
+            institute = SymplecticXMLCreateUser.__determineResearchersInstitute(researcher)
+            if (institute):
+                user_object.generic_field_14_institute = institute.name
+            if (institute):
+                user_object.generic_field_15_institute_id = str(institute.id)
+            user_objectlist.append(user_object)                
+        return user_objectlist
+        
+
+    @staticmethod
+    def __determineResearchersInstitute(researcher):
+      #description
+        """
+          PRIVATE
+          Determines which Entity within researcher.person.member_of is their Institute
+        """
+      #
+        try:
+          return researcher.person.member_of.filter(entity__in=[5,], importance_to_person=5)[0].entity
+        except (IndexError,):
+          return None
+
+        
+    @staticmethod
+    def __createXMLFileFromUserObjectList(user_objectlist):
+      #description
+        """
+          PRIVATE
+          Builds an XML File of Users we want to ask Symplectic to create, in the format that Symplectic`s API is expecting.
+            XML elements are created for each user in the list of SymplecticXMLCreateUser objects passed in
+        """
+      #Root
+        users_root = Element('import-users-request', {'xmlns':SYMPLECTIC_XMLNS_URI,} )
+      #Feed
+        SubElement(users_root, 'feed-id').text = IMPORT_USERS_FEED_ID
+      #List of users(plural) - will contain user(singular) elements
+        users_plural_element = SubElement(users_root, 'users')
+        for user_object in user_objectlist:
+          #Add individual user(singular) sub-element
+            user_element = SubElement(users_plural_element, 'user')
+          #Add details
+            SubElement(user_element, 'title').text = user_object.title
+            SubElement(user_element, 'initials').text = user_object.initials
+            SubElement(user_element, 'first-name').text = user_object.first_name
+            SubElement(user_element, 'last-name').text = user_object.last_name
+            SubElement(user_element, 'known-as').text = '' #user_object.known_as
+            SubElement(user_element, 'suffix').text = '' #user_object.suffix
+            SubElement(user_element, 'email').text = user_object.email
+            SubElement(user_element, 'authenticating-authority').text = user_object.authenticating_authority
+            SubElement(user_element, 'username').text = user_object.username
+            SubElement(user_element, 'proprietary-id').text = user_object.proprietary_id
+            SubElement(user_element, 'primary-group-descriptor').text = user_object.primary_group_descriptor
+            if user_object.is_academic == True:
+                SubElement(user_element, 'is-academic').text = 'true'
+            else:
+                SubElement(user_element, 'is-academic').text = 'false'
+            SubElement(user_element, 'generic-field-01').text = user_object.generic_field_1_dept
+            SubElement(user_element, 'generic-field-02').text = user_object.generic_field_2_dept_id
+            SubElement(user_element, 'generic-field-11').text = user_object.generic_field_11_irg
+            SubElement(user_element, 'generic-field-12').text = user_object.generic_field_12_irg_id            
+            SubElement(user_element, 'generic-field-13').text = user_object.generic_field_13_admin
+            SubElement(user_element, 'generic-field-14').text = user_object.generic_field_14_institute
+            SubElement(user_element, 'generic-field-15').text = user_object.generic_field_15_institute_id
+          #break connection between user_element pointer-variable and the actual xml-subelement in memory that contains the data
+            user_element = None
+      #Convert to ElementTree and write xml version to file
+        xml_filename = SYMPLECTIC_LOCAL_XML_FOLDER + SYMPLECTIC_LOCAL_USER_FOLDER + SYMPLECTIC_LOCAL_USER_IMPORTFILE
+        ElementTree(users_root).write(xml_filename)
+      #Return xml filename
+        return xml_filename
+
+        
+        
+        
+    @staticmethod
+    def __postUsersXMLFileToSymplectic(xml_filename):
+      #description
+        """
+          PRIVATE
+          Actually performs the HTTP POST of the XML File of Users we want to ask Symplectic to create, to its API
+        """
+      #prepare the HTTP request with the XML file of Users as the payload 
+        url = SYMPLECTIC_API_URL + 'import-users'
+        headers = { 
+            'Content-Type' : 'text/xml',
+        }
+        xml_file = open(xml_filename, 'r')
+        data = xml_file.read()
+        req = urllib2.Request(url, data, headers)
+      #POST the HTTP request to Symplectic API
+        try:
+          response = urllib2.urlopen(req)
+          the_page = response.read()        
+          return the_page
+        except (urllib2.URLError,):
+          raise ESymplecticPostFileError("Could not HTTP POST the CREATE Users XML file to Symplectic API")
+        
+
+
+    @staticmethod
+    def __extractUserCreatedCountFromResponse(xml_string):
+      #description
+        """
+          PRIVATE
+          Extracts the count from the symplectic response to the XML file of Users we sent it
+        """
+      #
+        try:
+          response_element = XML(xml_string)        
+          created_count = response_element.attrib.get("count")
+          return created_count
+        except (ExpatError,):
+          raise ESymplecticParseFileError("Could not extract the number of Users created from the XML file returned by Symplectic API")          
+        
+
+
+                
+# ***********************************************************************************************************************
+# *****  FINISH: Symplectic Create Users API XML                                                                    *****
+# *********************************************************************************************************************** 
+
+
+
+# @       @       @       @       @       @       @       @       @       @       @       @       @       @       @
+#  @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @
+#   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @
+#    @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @
+#     @       @       @       @       @       @       @       @       @       @       @       @       @       @       @
+
+
+
+# ***********************************************************************************************************************
+# *****  START: Symplectic Retrieve Users API XML                                                                   *****
+# ***********************************************************************************************************************
+
+class SymplecticXMLRetrieveUser(object):
+
+    @staticmethod
+    def askSymplecticForUsersID(researcher_list):
+      #description
+        """
+          Asks Symplectic API for the ID for researchers
+        """
+      #Retrieved SymplecticIDs
+        IDs = []
+      #For each researcher, ask symplectic for their Symplectic-id
+        for researcher in researcher_list:
+          SymplecticID = SymplecticXMLRetrieveUser.__getUsersFromSymplectic(researcher)
+          if SymplecticID and SymplecticID!='':
+              IDs.append(SymplecticID)
+      #Return list of ids retrieved
+        return IDs
+        
+
+    @staticmethod
+    def __getUsersFromSymplectic(researcher_object):
+      #description
+        """
+          PRIVATE
+          Asks Symplectic API for User info about specified researcher
+          Specify which researcher using proprietary-id
+          Receives XML File as response
+          Parses XML File to find symplectic ID for each User
+        """
+      #symplectic api url and local file path
+        url = SYMPLECTIC_API_URL + 'search-users?' + \
+                                            '&include-deleted=true' + \
+                                            '&authority=' + AUTHENTICATING_AUTHORITY + \
+                                            '&proprietary-id=' + str(researcher_object.person_id)
+        #'&username=' + researcher_object.person.institutional_username + \                                            
+        tmp_filename = SYMPLECTIC_LOCAL_XML_FOLDER + SYMPLECTIC_LOCAL_USER_FOLDER + str(researcher_object.person_id) + '.xml'
+      #get xml document from symplectic api and store on hd
+        try:
+          (tmp_filename, http_headers,) = urllib.urlretrieve(url, tmp_filename)
+        except (urllib2.URLError,):
+          raise ESymplecticGetFileError("Could not HTTP GET the XML file of User GUID from Symplectic API")
+      #parse xml file
+        users_etree = ElementTree(file=tmp_filename)
+        usersresponse_element = users_etree.getroot()
+      #delete local file from hd
+        #try:
+        os.remove(tmp_filename)
+        #except:
+        #pass        
+      #check if any user elements in tree
+        if usersresponse_element is None:
+          return ""
+      #for each retrieved user element in tree (should only be 1)
+        for user_element in usersresponse_element.getchildren():
+          #pull out of xml what symplectic says this researcher's proprietary id and symplectic-id are
+            proprietary_id = user_element.attrib.get("proprietary-id")
+            id = user_element.attrib.get("id")            
+          #if arkestra and symplectic agree this is the same person
+            if str(researcher_object.person_id) == proprietary_id:
+                # researcher_object.symplectic_int_id = id # int_id version
+                researcher_object.symplectic_id = id # guid version
+                researcher_object.save()
+                #force return after 1 (should only be 1 person per xml file anyway)
+                return id      
+            else:
+                raise ESymplecticExtractUserGUIDError("ID returned by Symplectic API not for correct Arkestra User (Proprietary ID doesnt match")
+                    
+# ***********************************************************************************************************************
+# *****  FINISH: Symplectic Retrieve Users API XML                                                                  *****
+# ***********************************************************************************************************************        
+
+
+
+# &       &       &       &       &       &       &       &       &       &       &       &       &       &       &
+#  &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &
+#   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &
+#    & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &
+#     &       &       &       &       &       &       &       &       &       &       &       &       &       &       &
+
+
+
+
+
+
+# &       &       &       &       &       &       &       &       &       &       &       &       &       &       &
+#  &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &
+#   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &
+#    & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &
+#     &       &       &       &       &       &       &       &       &       &       &       &       &       &       &
 
 
 
@@ -69,11 +477,14 @@ class SymplecticXMLAuthored(object):
           Parses XML File to find all publications for that researcher & notes preferences they have for each publication
         """
       #checking
-        if not(researcher_object) or (researcher_object.symplectic_id == ''):
+        # if not(researcher_object) or (researcher_object.symplectic_int_id is None): # int_id version
+        if not(researcher_object) or (researcher_object.symplectic_id is None): # guid version
             return
       #symplectic api url and local file path
-        url = SYMPLECTIC_API_URL + 'users/' + researcher_object.symplectic_id
-        tmp_filename = SYMPLECTIC_LOCAL_XML_FOLDER + SYMPLECTIC_LOCAL_AUTH_FOLDER + researcher_object.symplectic_id + '.xml'
+        # url = SYMPLECTIC_API_URL + 'users/' + str(researcher_object.symplectic_int_id) # int_id version
+        url = SYMPLECTIC_API_URL + 'users/' + str(researcher_object.symplectic_id) # guid version
+        # tmp_filename = SYMPLECTIC_LOCAL_XML_FOLDER + SYMPLECTIC_LOCAL_AUTH_FOLDER + str(researcher_object.symplectic_int_id) + '.xml' # int_id version
+        tmp_filename = SYMPLECTIC_LOCAL_XML_FOLDER + SYMPLECTIC_LOCAL_AUTH_FOLDER + str(researcher_object.symplectic_id) + '.xml' # guid version
       #get xml document from symplectic api and store on hd
         (tmp_filename, http_headers,) = urllib.urlretrieve(url, tmp_filename)
       #parse xml file
@@ -209,6 +620,7 @@ class SymplecticXMLPubs(object):
             return
       #publication attributes
         if pub_element is not None:
+            publication_object.new_id = pub_element.get('new-id')
             if pub_element.get('is-deleted','false') == 'true':
                 publication_object.is_deleted = True
             else:
@@ -475,384 +887,17 @@ class SymplecticXMLPubs(object):
 
 
 
-# @       @       @       @       @       @       @       @       @       @       @       @       @       @       @
-#  @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @
-#   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @
-#    @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @
-#     @       @       @       @       @       @       @       @       @       @       @       @       @       @       @
+# &       &       &       &       &       &       &       &       &       &       &       &       &       &       &
+#  &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &
+#   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &
+#    & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &
+#     &       &       &       &       &       &       &       &       &       &       &       &       &       &       &
 
-
-
-# ***********************************************************************************************************************
-# *****  START: Symplectic Clear Users API XML                                                                      *****
-# ***********************************************************************************************************************
-
-
-class SymplecticXMLClearUser(object):
-
-
-    @staticmethod
-    def askSymplecticToClearUsers():
-      #description
-        """
-          Sends an XML File to Symplectic API asking it to clear all users
-        """
-      #
-        xml_filename = SymplecticXMLClearUser.__createXMLFileForClear()
-        symplectic_response = SymplecticXMLClearUser.__postClearUsersXMLFileToSymplectic(xml_filename)
-        cleared_count = SymplecticXMLClearUser.__extractUserClearedCountFromResponse(symplectic_response)
-        return cleared_count
-    
-    
-    
-    @staticmethod
-    def __createXMLFileForClear():
-      #description
-        """
-          PRIVATE
-          Builds an XML File to ask Symplectic to clear all users
-        """
-      #Root
-        clear_root = Element('clear-users-request', {'xmlns':SYMPLECTIC_XMLNS_URI,} )
-      #Feed
-        SubElement(clear_root, 'feed-id').text = IMPORT_USERS_FEED_ID
-      #Convert to ElementTree and write xml version to file
-        xml_filename = SYMPLECTIC_LOCAL_XML_FOLDER + SYMPLECTIC_LOCAL_USER_FOLDER + SYMPLECTIC_LOCAL_USER_CLEARFILE
-        ElementTree(clear_root).write(xml_filename)
-      #Return xml filename
-        return xml_filename
-
-        
-        
-        
-    @staticmethod
-    def __postClearUsersXMLFileToSymplectic(xml_filename):
-      #description
-        """
-          PRIVATE
-          Actually performs the HTTP POST of the XML File to Symplectic API, asking it to clear users
-        """
-      #prepare the HTTP request with the XML file of ClearUsers as the payload 
-        url = SYMPLECTIC_API_URL + 'clear-users'
-        headers = { 
-            'Content-Type' : 'text/xml',
-        }
-        xml_file = open(xml_filename, 'r')
-        data = xml_file.read()
-        req = urllib2.Request(url, data, headers)
-      #POST the HTTP request to Symplectic API
-        try:
-          response = urllib2.urlopen(req)
-          the_page = response.read()        
-          return the_page
-        except (urllib2.URLError,):
-          raise ESymplecticPostFileError("Could not HTTP POST the CLEAR Users XML file to Symplectic API")
-        
-
-
-    @staticmethod
-    def __extractUserClearedCountFromResponse(xml_string):
-      #description
-        """
-          PRIVATE
-          Extracts the count from the symplectic response to the XML file clear
-        """
-      #
-        try:
-          response_element = XML(xml_string)
-          cleared_count = response_element.attrib.get("count")
-          return cleared_count
-        except (ExpatError,):
-          raise ESymplecticParseFileError("Could not extract the number of Users cleared from the XML file returned by Symplectic API")
-        
-
-
-                
-# ***********************************************************************************************************************
-# *****  FINISH: Symplectic Create Users API XML                                                                    *****
-# *********************************************************************************************************************** 
-
-
-
-# @       @       @       @       @       @       @       @       @       @       @       @       @       @       @
-#  @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @
-#   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @
-#    @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @
-#     @       @       @       @       @       @       @       @       @       @       @       @       @       @       @
-
-
-
-# ***********************************************************************************************************************
-# *****  START: Symplectic Create Users API XML                                                                     *****
-# ***********************************************************************************************************************
-
-
-class SymplecticXMLCreateUser(object):
-
-    def __init__(self):
-        self.title = ''
-        self.initials = ''
-        self.first_name = ''
-        self.last_name = ''
-        self.known_as = ''
-        self.suffix = ''
-        self.email = ''
-        self.authenticating_authority = ''
-        self.username = ''
-        self.proprietary_id = ''
-        self.primary_group_descriptor = ''
-        self.is_academic = ''
-        self.generic_field_1_dept = ''
-        self.generic_field_2_dept_id = ''
-        self.generic_field_11_irg = ''
-        self.generic_field_12_irg_id = ''
-        self.generic_field_13_admin = ''
-
-    
-    
-    
-    @staticmethod
-    def informSymplecticOfUsers(researcher_list):
-      #description
-        """
-          Sends an XML File of Users to Symplectic, to its API
-        """
-      #
-        symplectic_user_objectlist = SymplecticXMLCreateUser.__createSymplecticUserListFromResearcherList(researcher_list)    
-        xml_filename = SymplecticXMLCreateUser.__createXMLFileFromUserObjectList(symplectic_user_objectlist)
-        symplectic_response = SymplecticXMLCreateUser.__postUsersXMLFileToSymplectic(xml_filename)                  
-        created_count = SymplecticXMLCreateUser.__extractUserCreatedCountFromResponse(symplectic_response)
-        return created_count
-
-    
-    
-    @staticmethod
-    def __createSymplecticUserListFromResearcherList(researcher_list):
-      #description
-        """
-          PRIVATE
-          Creates a list of SymplecticXMLCreateUser objects from a list of Publications.Researcher objects
-        """
-      #
-        user_objectlist = []
-        for researcher in researcher_list:
-          #create symplectic specific user object
-            user_object = SymplecticXMLCreateUser()
-            user_object.title = str(researcher.person.title)
-            user_object.initials = researcher.person.initials
-            user_object.first_name = researcher.person.given_name
-            user_object.last_name = researcher.person.surname
-            user_object.known_as = ''
-            user_object.suffix = ''
-            user_object.email = researcher.person.email
-            user_object.authenticating_authority = AUTHENTICATING_AUTHORITY
-            user_object.username = researcher.person.institutional_username
-            user_object.proprietary_id = str(researcher.person.id)
-            user_object.primary_group_descriptor = 'MEDIC'
-            user_object.is_academic = True
-            # if (researcher.person.department):
-            #     user_object.generic_field_1_dept = researcher.person.department.name
-            #     user_object.generic_field_2_dept_id = str(researcher.person.department.id)
-            # if (researcher.person.irg):
-            #     user_object.generic_field_11_irg = researcher.person.irg.name
-            #     user_object.generic_field_12_irg_id = str(researcher.person.irg.id)
-            if (researcher.symplectic_access) and (not researcher.publishes):
-                user_object.generic_field_13_admin = 'Y'
-            else:
-                user_object.generic_field_13_admin = 'N'
-            user_objectlist.append(user_object)                
-        return user_objectlist
-        
-
-        
-    @staticmethod
-    def __createXMLFileFromUserObjectList(user_objectlist):
-      #description
-        """
-          PRIVATE
-          Builds an XML File of Users we want to ask Symplectic to create, in the format that Symplectic`s API is expecting.
-            XML elements are created for each user in the list of SymplecticXMLCreateUser objects passed in
-        """
-      #Root
-        users_root = Element('import-users-request', {'xmlns':SYMPLECTIC_XMLNS_URI,} )
-      #Feed
-        SubElement(users_root, 'feed-id').text = IMPORT_USERS_FEED_ID
-      #List of users(plural) - will contain user(singular) elements
-        users_plural_element = SubElement(users_root, 'users')
-        for user_object in user_objectlist:
-          #Add individual user(singular) sub-element
-            user_element = SubElement(users_plural_element, 'user')
-          #Add details
-            SubElement(user_element, 'title').text = user_object.title
-            SubElement(user_element, 'initials').text = user_object.initials
-            SubElement(user_element, 'first-name').text = user_object.first_name
-            SubElement(user_element, 'last-name').text = user_object.last_name
-            SubElement(user_element, 'known-as').text = '' #user_object.known_as
-            SubElement(user_element, 'suffix').text = '' #user_object.suffix
-            SubElement(user_element, 'email').text = user_object.email
-            SubElement(user_element, 'authenticating-authority').text = user_object.authenticating_authority
-            SubElement(user_element, 'username').text = user_object.username
-            SubElement(user_element, 'proprietary-id').text = user_object.proprietary_id
-            SubElement(user_element, 'primary-group-descriptor').text = user_object.primary_group_descriptor
-            if user_object.is_academic == True:
-                SubElement(user_element, 'is-academic').text = 'true'
-            else:
-                SubElement(user_element, 'is-academic').text = 'false'
-            SubElement(user_element, 'generic-field-01').text = user_object.generic_field_1_dept
-            SubElement(user_element, 'generic-field-02').text = user_object.generic_field_2_dept_id
-            SubElement(user_element, 'generic-field-11').text = user_object.generic_field_11_irg
-            SubElement(user_element, 'generic-field-12').text = user_object.generic_field_12_irg_id            
-            SubElement(user_element, 'generic-field-13').text = user_object.generic_field_13_admin
-          #break connection between user_element pointer-variable and the actual xml-subelement in memory that contains the data
-            user_element = None
-      #Convert to ElementTree and write xml version to file
-        xml_filename = SYMPLECTIC_LOCAL_XML_FOLDER + SYMPLECTIC_LOCAL_USER_FOLDER + SYMPLECTIC_LOCAL_USER_IMPORTFILE
-        ElementTree(users_root).write(xml_filename)
-      #Return xml filename
-        return xml_filename
-
-        
-        
-        
-    @staticmethod
-    def __postUsersXMLFileToSymplectic(xml_filename):
-      #description
-        """
-          PRIVATE
-          Actually performs the HTTP POST of the XML File of Users we want to ask Symplectic to create, to its API
-        """
-      #prepare the HTTP request with the XML file of Users as the payload 
-        url = SYMPLECTIC_API_URL + 'import-users'
-        headers = { 
-            'Content-Type' : 'text/xml',
-        }
-        xml_file = open(xml_filename, 'r')
-        data = xml_file.read()
-        req = urllib2.Request(url, data, headers)
-      #POST the HTTP request to Symplectic API
-        try:
-          response = urllib2.urlopen(req)
-          the_page = response.read()        
-          return the_page
-        except (urllib2.URLError,):
-          raise ESymplecticPostFileError("Could not HTTP POST the CREATE Users XML file to Symplectic API")
-        
-
-
-    @staticmethod
-    def __extractUserCreatedCountFromResponse(xml_string):
-      #description
-        """
-          PRIVATE
-          Extracts the count from the symplectic response to the XML file of Users we sent it
-        """
-      #
-        try:
-          response_element = XML(xml_string)        
-          created_count = response_element.attrib.get("count")
-          return created_count
-        except (ExpatError,):
-          raise ESymplecticParseFileError("Could not extract the number of Users created from the XML file returned by Symplectic API")          
-        
-
-
-                
-# ***********************************************************************************************************************
-# *****  FINISH: Symplectic Create Users API XML                                                                    *****
-# *********************************************************************************************************************** 
-
-
-
-# @       @       @       @       @       @       @       @       @       @       @       @       @       @       @
-#  @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @
-#   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @
-#    @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @
-#     @       @       @       @       @       @       @       @       @       @       @       @       @       @       @
-
-
-
-# ***********************************************************************************************************************
-# *****  START: Symplectic Retrieve Users API XML                                                                   *****
-# ***********************************************************************************************************************
-
-class SymplecticXMLRetrieveUser(object):
-
-    @staticmethod
-    def askSymplecticForUsersGUID(researcher_list):
-      #description
-        """
-          Asks Symplectic API for the GUID for researchers
-        """
-      #Retrieved GUIDs
-        guids = []
-      #For each researcher, ask symplectic for their guid
-        for researcher in researcher_list:
-          guid = SymplecticXMLRetrieveUser.__getUsersFromSymplectic(researcher)
-          if guid and guid!='':
-              guids.append(guid)
-      #Return list of guids retrieved
-        return guids
-          
-
-    @staticmethod
-    def __getUsersFromSymplectic(researcher_object):
-      #description
-        """
-          PRIVATE
-          Asks Symplectic API for User info about specified researcher
-          Receives XML File as response
-          Parses XML File to find symplectic GUID for each User
-        """
-      #symplectic api url and local file path
-        url = SYMPLECTIC_API_URL + 'search-users?' + \
-                                            '&include-deleted=true' + \
-                                            '&authority=' + AUTHENTICATING_AUTHORITY + \
-                                            '&proprietary-id=' + str(researcher_object.person_id)
-        #'&username=' + researcher_object.person.institutional_username + \                                            
-        tmp_filename = SYMPLECTIC_LOCAL_XML_FOLDER + SYMPLECTIC_LOCAL_USER_FOLDER + str(researcher_object.person_id) + '.xml'
-      #get xml document from symplectic api and store on hd
-        try:
-          (tmp_filename, http_headers,) = urllib.urlretrieve(url, tmp_filename)
-        except (urllib2.URLError,):
-          raise ESymplecticGetFileError("Could not HTTP GET the XML file of User GUID from Symplectic API")
-      #parse xml file
-        users_etree = ElementTree(file=tmp_filename)
-        usersresponse_element = users_etree.getroot()
-      #delete local file from hd
-        #try:
-        os.remove(tmp_filename)
-        #except:
-        #pass        
-      #check if any user elements in tree
-        if usersresponse_element is None:
-          return ""
-      #for each retrieved user element in tree (should only be 1)
-        for user_element in usersresponse_element.getchildren():
-          #pull out of xml what symplectic says this researcher's proprietary id and symplectic-guid are
-            proprietary_id = user_element.attrib.get("proprietary-id")
-            guid = user_element.attrib.get("id")            
-          #if arkestra and symplectic agree this is the same person
-            if str(researcher_object.person_id) == proprietary_id:
-                researcher_object.symplectic_id = guid
-                researcher_object.save()
-                #force return after 1 (should only be 1 person per xml file anyway)
-                return guid      
-            else:
-                raise ESymplecticExtractUserGUIDError("GUID returned by Symplectic API not for correct Arkestra User (Proprietary ID doesnt match")          
-                    
-# ***********************************************************************************************************************
-# *****  FINISH: Symplectic Retrieve Users API XML                                                                  *****
-# ***********************************************************************************************************************        
-
-
-
-
-# @       @       @       @       @       @       @       @       @       @       @       @       @       @       @
-#  @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @
-#   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @
-#    @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @
-#     @       @       @       @       @       @       @       @       @       @       @       @       @       @       @
-
+# &       &       &       &       &       &       &       &       &       &       &       &       &       &       &
+#  &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &
+#   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &
+#    & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &
+#     &       &       &       &       &       &       &       &       &       &       &       &       &       &       &
 
 
 
@@ -894,9 +939,8 @@ class ESymplecticExtractUserGUIDError(ESymplecticError):
 
 
 
-# @       @       @       @       @       @       @       @       @       @       @       @       @       @       @
-#  @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @
-#   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @
-#    @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @
-#     @       @       @       @       @       @       @       @       @       @       @       @       @       @       @
-
+# &       &       &       &       &       &       &       &       &       &       &       &       &       &       &
+#  &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &
+#   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &   &
+#    & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &     & &
+#     &       &       &       &       &       &       &       &       &       &       &       &       &       &       &
