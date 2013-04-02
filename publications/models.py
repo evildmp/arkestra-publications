@@ -503,7 +503,8 @@ class Authored(models.Model):
 
   #
     def __unicode__(self):
-        return str(self.researcher) + ':' + str(self.publication)
+        # return str(self.researcher) + ':' + str(self.publication)
+        return self.researcher.__unicode__() + ':' + self.publication.__unicode__()
         
         
   # DONT try to override __init__ for a model!

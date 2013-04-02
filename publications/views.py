@@ -45,6 +45,7 @@ def publications(request, slug):
 
     instance.type = "main_page"
     instance.limit_to = 10
+    instance.favourites_only = True
     meta = {"description": "Recent academic research publications",}
     title = str(entity)  + " recent publications"
     pagetitle = "Recent publications"

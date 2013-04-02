@@ -94,6 +94,7 @@ class CMSPublicationsPlugin(ArkestraGenericPlugin, CMSPluginBase):
             publications["items"] = True
             instance.more_publications = True # for the other_links method             
 
+        # not a menu
         else:
             key = str(instance.real_entity.slug) + str(instance.view) + str(instance.type)
             cached = cache.get(key, None)
@@ -103,6 +104,7 @@ class CMSPublicationsPlugin(ArkestraGenericPlugin, CMSPluginBase):
 
                 # get all publications
                 all_publications = BibliographicRecord.objects.filter(
+                    authored__is_a_favourite = instance.favourites_only,
                     authored__visible = True,
                     authored__researcher__person__member_of__entity__in=instance.real_entity.get_descendants(include_self=True)) \
                     .distinct().order_by('-publication_date')
@@ -120,8 +122,13 @@ class CMSPublicationsPlugin(ArkestraGenericPlugin, CMSPluginBase):
                             ordered_publications.append(publication)    
                     pubs = ordered_publications
 
-                elif instance.type == "main_page" or instance.favourites_only:
-                    pubs = all_publications.filter(authored__is_a_favourite = True)[0:instance.limit_to]
+                # if not an archive, just grab the lot 
+                else:
+                    pubs = all_publications
+                
+                if instance.limit_to:
+                    pubs = pubs[0:instance.limit_to]
+                    
             
                 # set the more_publications flag 
                 if instance.real_entity.website and all_publications.count() > instance.limit_to:
