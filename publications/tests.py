@@ -9,7 +9,7 @@ import unittest
 from cms.models.placeholdermodel import Placeholder
 from cms.api import add_plugin
 
-from publications.models import Researcher, PublicationsPlugin
+from publications.models import Researcher, PublicationsPlugin, BibliographicRecord
 from contacts_and_people.models import Person, Entity
 
 class ResearcherTests(unittest.TestCase):
@@ -44,3 +44,13 @@ class PluginTests(TestCase):
         self.plugin.view = "current"
         self.plugin.favourites_only = False
         instance.get_items(self.plugin)
+        
+class BibliographicRecordTests(TestCase):
+    def test_copes_with_null_start_date(self):
+        b = BibliographicRecord()
+        self.assertEqual(b.get_start_date(), "")
+        
+class BibliographicRecordTests(TestCase):
+    def test_copes_with_null_publication_date(self):
+        b = BibliographicRecord()
+        self.assertEqual(b.get_publication_date(), "")        

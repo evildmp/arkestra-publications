@@ -251,16 +251,19 @@ class BibliographicRecord(models.Model):
             pass
             
     def get_publication_date(self):
-        try:
-            return date(datetime.strptime(self.publication_date, "%Y-%m-%d"), "F Y")
-        except ValueError:
+        if not self.publication_date:
+            return ""                  
+        else:
             try:
-                return date(datetime.strptime(self.publication_date, "%Y-%m"), "F Y")
+                return date(datetime.strptime(self.publication_date, "%Y-%m-%d"), "F Y")
             except ValueError:
                 try:
-                    return date(datetime.strptime(self.publication_date, "%Y"), "Y")
-                except:
-                    return self.publication_date     
+                    return date(datetime.strptime(self.publication_date, "%Y-%m"), "F Y")
+                except ValueError:
+                    try:
+                        return date(datetime.strptime(self.publication_date, "%Y"), "Y")
+                    except:
+                        return self.publication_date     
                     
     def get_publication_year(self):
         date = self.publication_date[:4]
@@ -270,16 +273,19 @@ class BibliographicRecord(models.Model):
             return date
             
     def get_start_date(self):
-        try:
-            return date(datetime.strptime(self.start_date, "%Y-%m-%d"), "F Y")
-        except ValueError:
+        if not self.start_date:
+            return ""                  
+        else:
             try:
-                return date(datetime.strptime(self.start_date, "%Y-%m"), "F Y")
+                return date(datetime.strptime(self.start_date, "%Y-%m-%d"), "F Y")
             except ValueError:
                 try:
-                    return date(datetime.strptime(self.start_date, "%Y"), "Y")
-                except:
-                    return self.start_date  
+                    return date(datetime.strptime(self.start_date, "%Y-%m"), "F Y")
+                except ValueError:
+                    try:
+                        return date(datetime.strptime(self.start_date, "%Y"), "Y")
+                    except ValueError:
+                        return self.start_date
                     
     def get_start_year(self):
         date = self.start_date[:4]
