@@ -1,5 +1,6 @@
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
+from django.http import Http404
 
 from contacts_and_people.models import Entity
 
@@ -10,14 +11,15 @@ from cms_plugins import CMSPublicationsPlugin
 
 def common_settings(request, slug):
     if slug:
-        try:
-            entity = Entity.objects.get(slug=slug)
-        except Entity.DoesNotExist:
-            raise Http404   
+        entity = get_object_or_404(Entity, slug=slug)
     else:
         entity = Entity.objects.base_entity()
+    if not (entity.website and entity.website.published and entity.auto_publications_page):
+        raise Http404 
+
+    
     request.auto_page_url = request.path
-    # request.path = entity.get_website.get_absolute_url() # for the menu, so it knows where we are
+    # request.path = entity.get_website.get_absolute_url() # for the menu, so it knows where we ares
     request.current_page = entity.get_website
     context = RequestContext(request)
     instance = ArkestraGenericPlugin()
@@ -36,17 +38,11 @@ def common_settings(request, slug):
 def publications(request, slug):
     instance, context, entity = common_settings(request, slug)    
 
-    # general values needed to set up and construct the page and menus
-    entity = Entity.objects.get(slug=slug)
-    # for the menu, because next we mess up the path
-    request.auto_page_url = entity.get_related_info_page_url("contact")
-    # request.path = entity.get_website.get_absolute_url() # for the menu, so it knows where we are
-    request.current_page = entity.get_website
-
     instance.type = "main_page"
-    instance.limit_to = 10
     instance.favourites_only = True
+
     meta = {"description": "Recent academic research publications",}
+
     title = str(entity)  + " recent publications"
     pagetitle = "Recent publications"
     
@@ -70,12 +66,6 @@ def publications(request, slug):
 def publications_archive(request, slug):
     instance, context, entity = common_settings(request, slug)
 
-    # general values needed to set up and construct the page and menus
-    entity = Entity.objects.get(slug=slug)
-    # for the menu, because next we mess up the path
-    request.auto_page_url = entity.get_related_info_page_url("contact")
-    # request.path = entity.get_website.get_absolute_url() # for the menu, so it knows where we are
-    request.current_page = entity.get_website
 
     instance.type = "sub_page"
     instance.view = "archive"
