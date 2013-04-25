@@ -46,12 +46,6 @@
 
 			{% endfor %}
 
-			{% if everything.more_publications and everything.type == "plugin" %}
-				<ul class = "close icons"><li><strong><a href = "{{ everything.more_publications }}">More {{ everything.entity.short_name }} publications</a></strong></li></ul>
-			{% endif %}
-
-
-
 		{% include "arkestra/universal_other_items_for_main_page.html" %}
 	{% endif %}
 {% endfor %}
