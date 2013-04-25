@@ -49,7 +49,7 @@ PUBLICATION_INFORMATION = (
     },       
   )
 
-class CMSPublicationsPlugin(ArkestraGenericPlugin, CMSPluginBase):
+class CMSPublicationsPlugin(ArkestraGenericPlugin, AutocompleteMixin, CMSPluginBase):
     name = _("Publications")
     model = PublicationsPlugin
     render_template = "publications/publications.html"
