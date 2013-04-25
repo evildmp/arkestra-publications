@@ -262,7 +262,7 @@ class BibliographicRecord(models.Model):
                 except ValueError:
                     try:
                         return date(datetime.strptime(self.publication_date, "%Y"), "Y")
-                    except:
+                    except ValueError:
                         return self.publication_date     
                     
     def get_publication_year(self):
