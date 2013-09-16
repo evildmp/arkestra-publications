@@ -11,6 +11,8 @@ from cms.models.placeholdermodel import Placeholder
 from cms.api import add_plugin, create_page
 
 from publications.models import Researcher, PublicationsPlugin, BibliographicRecord
+from publications.utilities import convert_to_date
+
 from contacts_and_people.models import Person, Entity
 
 class ResearcherTests(unittest.TestCase):
@@ -25,15 +27,15 @@ class ResearcherTests(unittest.TestCase):
 class PluginTests(TestCase):
     def setUp(self):
         self.school = Entity(
-            name="School of Medicine", 
+            name="School of Medicine",
             slug="medicine",
             )
         self.school.save()
         self.placeholder = Placeholder(slot=u"some_slot")
         self.placeholder.save()
         self.plugin = add_plugin(
-            self.placeholder, 
-            u"CMSPublicationsPlugin", 
+            self.placeholder,
+            u"CMSPublicationsPlugin",
             u"en",
             entity=self.school
         )
@@ -45,17 +47,17 @@ class PluginTests(TestCase):
         self.plugin.view = "current"
         self.plugin.favourites_only = False
         instance.get_items(self.plugin)
-        
+
 class BibliographicRecordTests(TestCase):
     def test_copes_with_null_start_date(self):
         b = BibliographicRecord()
         self.assertEqual(b.get_start_date(), "")
-        
+
 class BibliographicRecordTests(TestCase):
     def test_copes_with_null_publication_date(self):
         b = BibliographicRecord()
-        self.assertEqual(b.get_publication_date(), "")        
-        
+        self.assertEqual(b.get_publication_date(), "")
+
 
 @override_settings(
     CMS_TEMPLATES = (('null.html', "Null"),)
@@ -64,12 +66,12 @@ class PublicationsEntityPagesViewsTests(TestCase):
     def setUp(self):
         # Every test needs a client.
         self.client = Client()
-        
+
 
         home_page = create_page(title="test", template="null.html", language="en", published=True)
 
         self.school = Entity(
-            name="School of Medicine", 
+            name="School of Medicine",
             slug="medicine",
             auto_publications_page=True,
             website=home_page
@@ -110,9 +112,9 @@ class PublicationsEntityPageIsUnpublishedViewsTests(TestCase):
     def setUp(self):
         # Every test needs a client.
         self.client = Client()
-        
+
         self.school = Entity(
-            name="School of Medicine", 
+            name="School of Medicine",
             slug="medicine",
             auto_publications_page=True,
             )
@@ -153,9 +155,9 @@ class PublicationsEntityPagesNoAutoPageViewsTests(TestCase):
     def setUp(self):
         # Every test needs a client.
         self.client = Client()
-        
+
         self.school = Entity(
-            name="School of Medicine", 
+            name="School of Medicine",
             slug="medicine",
             auto_publications_page=False,
             )
@@ -191,3 +193,21 @@ class PublicationsEntityPagesNoAutoPageViewsTests(TestCase):
         response = self.client.get('/publications-archive/xxxx/')
         self.assertEqual(response.status_code, 404)
 
+class ConvertToDateTests(TestCase):
+    def test_null(self):
+        self.assertEqual(
+            convert_to_date(""),
+            ""
+            )
+
+    def test_year(self):
+        self.assertEqual(
+            convert_to_date("2010"),
+            "2010"
+            )
+
+from lister import PublicationsList
+
+class PublicationsLister(TestCase):
+    def test_lister(self):
+        pl = PublicationsList()

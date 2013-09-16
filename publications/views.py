@@ -2,12 +2,16 @@ from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.http import Http404
 
+
 from contacts_and_people.models import Entity
 
 from arkestra_utilities.settings import MAIN_NEWS_EVENTS_PAGE_LIST_LENGTH, IN_BODY_HEADING_LEVEL
 
 from arkestra_utilities.generic_models import ArkestraGenericPlugin
 from cms_plugins import CMSPublicationsPlugin
+
+
+
 
 def common_settings(request, slug):
     if slug:
@@ -92,3 +96,13 @@ def publications_archive(request, slug):
         "contacts_and_people/arkestra_page.html",
         context,
         )
+
+
+from django.views.generic.dates import YearArchiveView
+from models import BibliographicRecord
+
+class ArticleYearArchiveView(YearArchiveView):
+    queryset = BibliographicRecord.objects.all()
+    date_field = "publication_date"
+    make_object_list = True
+    allow_future = True
