@@ -39,7 +39,7 @@ def common_settings(request, slug):
     return instance, context, entity
 
 
-def publications(request, slug):
+def publications(request, slug=None):
     instance, context, entity = common_settings(request, slug)    
 
     instance.type = "main_page"
@@ -97,12 +97,3 @@ def publications_archive(request, slug):
         context,
         )
 
-
-from django.views.generic.dates import YearArchiveView
-from models import BibliographicRecord
-
-class ArticleYearArchiveView(YearArchiveView):
-    queryset = BibliographicRecord.objects.all()
-    date_field = "publication_date"
-    make_object_list = True
-    allow_future = True

@@ -10,8 +10,7 @@ import unittest
 from cms.models.placeholdermodel import Placeholder
 from cms.api import add_plugin, create_page
 
-from publications.models import Researcher, PublicationsPlugin, BibliographicRecord
-from publications.utilities import convert_to_date
+from publications.models import Researcher, Publication, Authored, PublicationsPlugin, BibliographicRecord
 
 from contacts_and_people.models import Person, Entity
 
@@ -63,6 +62,8 @@ class BibliographicRecordTests(TestCase):
     CMS_TEMPLATES = (('null.html', "Null"),)
 )
 class PublicationsEntityPagesViewsTests(TestCase):
+    urls = 'publications.test_urls'
+
     def setUp(self):
         # Every test needs a client.
         self.client = Client()
@@ -193,21 +194,16 @@ class PublicationsEntityPagesNoAutoPageViewsTests(TestCase):
         response = self.client.get('/publications-archive/xxxx/')
         self.assertEqual(response.status_code, 404)
 
-class ConvertToDateTests(TestCase):
-    def test_null(self):
-        self.assertEqual(
-            convert_to_date(""),
-            ""
-            )
-
-    def test_year(self):
-        self.assertEqual(
-            convert_to_date("2010"),
-            "2010"
-            )
-
 from lister import PublicationsList
 
 class PublicationsLister(TestCase):
-    def test_lister(self):
-        pl = PublicationsList()
+    def test_lister_gets_an_item(self):
+        p = Publication(guid="test-publication-1")
+        p.save()
+        br = BibliographicRecord(publication=p)
+        br.save()
+        self.assertEqual(
+            set(PublicationsList().items), 
+            set([br])
+            )
+
