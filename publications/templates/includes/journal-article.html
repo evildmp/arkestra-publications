@@ -1,27 +1,27 @@
 {% spaceless %}
 	<cite class = "articles">
-		{% if publication.get_url %}<a href = "{{ publication.get_url }}"><strong>{{ publication.title }}</strong></a>
-		{% else %}<strong>{{ publication.title }}</strong>
+		{% if item.get_url %}<a href = "{{ item.get_url }}"><strong>{{ item.title }}</strong></a>
+		{% else %}<strong>{{ item.title }}</strong>
 		{% endif %}
 	</cite>
 
 	{% ifequal everything.format "short" %}
-		<br/>{{ publication.first_author }} et al,
-		<span class = "publication-details">
-			<cite class = "journal">{{ publication.journal|lower|title }}</cite>
+		<br/>{{ item.first_author }} et al,
+		<span class = "item-details">
+			<cite class = "journal">{{ item.journal|lower|title }}</cite>
 	    </span>
 
 	{% else %}
 
-	    <br />{{ publication.authors }} 
-		<span class = "publication-details">
-			<cite class = "journal">{{ publication.journal|lower|title }}</cite>{% if publication.volume %}, 
-			Volume {{ publication.volume }}{% endif %}{% if publication.issue %}, 
-			{{ publication.issue }}{% endif %}{% if publication.get_publication_date %}
-			({{ publication.get_publication_date }}){% endif %}
-			{% if publication.begin_page %}
-				{% if publication.end_page %}
-					pp.{{ publication.begin_page }}-{{publication.end_page}}{% else %}p. {{ publication.begin_page }}
+	    <br />{{ item.authors }}
+		<span class = "item-details">
+			<cite class = "journal">{{ item.journal|lower|title }}</cite>{% if item.volume %},
+			Volume {{ item.volume }}{% endif %}{% if item.issue %},
+			{{ item.issue }}{% endif %}{% if item.get_item_date %}
+			({{ item.get_item_date }}){% endif %}
+			{% if item.begin_page %}
+				{% if item.end_page %}
+					pp.{{ item.begin_page }}-{{item.end_page}}{% else %}p. {{ item.begin_page }}
 				{% endif %}
 			{% endif %}
 		</span>

@@ -1,7 +1,5 @@
 from django.conf.urls.defaults import patterns, url, include
-from django.views.generic.dates import ArchiveIndexView
 
-from views import ArticleYearArchiveView
 from django.contrib import admin
 
 admin.autodiscover()
@@ -11,12 +9,29 @@ urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
 
     # named entities' publications
-    (r"^publications/(?P<slug>[-\w]+)/$", "publications.views.publications"),
-    (r'^publications-archive/(?P<slug>[-\w]+)/$', "publications.views.publications_archive"),
+    url(
+        r"^publications/(?P<slug>[-\w]+)/$", 
+        "publications.views.publications",
+        name="publications"),
+        
+    url(
+        r'^publications-archive/(?P<slug>[-\w]+)/$',
+        "publications.views.publications_archive",
+        name="publications-archive"
+        ),
     
     # base entity's publications
-    (r'^publications/$', "publications.views.publications"),    
-    (r'^publications-archive/$', "publications.views.publications_archive"),
+    url(
+        r'^publications/$', 
+        "publications.views.publications",
+        name="publications-base"
+        ),    
+        
+    url(
+        r'^publications-archive/$', 
+        "publications.views.publications_archive",
+        name="publications-archive-base"
+        ),
 
     url(r'^', include('cms.urls')),
 

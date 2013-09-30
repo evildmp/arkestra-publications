@@ -62,99 +62,137 @@ PUBLICATION_INFORMATION = (
     },       
   )
 
-@register.inclusion_tag('person_selected_publications.html', takes_context = True)
+from publications.lister import PublicationsLister, PublicationsArchiveListForPerson, PublicationsSelectedListForPerson
+
+@register.inclusion_tag(
+    'arkestra/generic_lister.html', 
+    takes_context = True
+    )
 def get_selected_person_publications(context, researcher = None):
     """   
     Lists Researcher's selected articles
     """
-    selected_publications = []
-    if researcher == None:
-        researcher = context.get('person').researcher
-    all_publications = BibliographicRecord.objects.filter(authored__visible = True, authored__researcher = researcher, authored__is_a_favourite = True)
-    # loop first through the PUBLICATION_INFORMATION dictionaries
-    for information in PUBLICATION_INFORMATION:
-        publication_type = information['type'] # because we want to use it a bit later
-        publications = all_publications.filter(publication__type = publication_type)
-        for publication in publications:
-            publication.template = "includes/" + publication_type + ".html"
-            selected_publications.append(publication)
-    selected_publications.sort(reverse = True, key=operator.attrgetter('publication_date'))
-    #selected_publications.sort(key=lambda x: x[0].publication_date)
-    return {"selected_publications": selected_publications[0:6]}
+    researcher = researcher or context.get('person').researcher
+    # invoke the lister to find out more
+    lister = PublicationsLister(
+        listkinds=[
+            ("publications", PublicationsSelectedListForPerson),
+                ],
+        researcher=researcher,
+        order_by="date",
+        request=context["request"],
+        )
+    context.update({"lister": lister})
+    return context
 
 
-@register.inclusion_tag('all_publications.html', takes_context = True)
+    # if researcher == None:
+    #     researcher = context.get('person').researcher
+    # all_publications = BibliographicRecord.objects.filter(authored__visible = True, authored__researcher = researcher, authored__is_a_favourite = True)
+    # # loop first through the PUBLICATION_INFORMATION dictionaries
+    # for information in PUBLICATION_INFORMATION:
+    #     publication_type = information['type'] # because we want to use it a bit later
+    #     publications = all_publications.filter(publication__type = publication_type)
+    #     for publication in publications:
+    #         publication.template = "includes/" + publication_type + ".html"
+    #         selected_publications.append(publication)
+    # selected_publications.sort(reverse = True, key=operator.attrgetter('publication_date'))
+    # #selected_publications.sort(key=lambda x: x[0].publication_date)
+    # return {"selected_publications": selected_publications[0:6]}
+
+
+
+@register.inclusion_tag(
+    'arkestra/generic_filter_list.html', 
+    takes_context = True
+    )
 def get_all_person_publications(context, researcher = None):
-    """   
-    Lists all the Researcher's articles
-    """
-    if researcher == None:
-        researcher = context.get('person').researcher
-    all_publications = researcher.get_all_publications() \
-        .distinct() \
-        .order_by('-publication__type', '-publication_date')
-    ordered_publications = []    
-    for information in PUBLICATION_INFORMATION:
-        publication_type = information['type'] # because we cant use information['type'] inside a .filter()
-        publications = all_publications.filter(publication__type = publication_type).order_by('-publication_date',)
-        for publication in publications:
-            publication.kind = information['name']
-            ordered_publications.append(publication)    
-    return {
-        "all_publications": ordered_publications,
-      }                
+    researcher = researcher or context.get('person').researcher
+    # invoke the lister to find out more
+    lister = PublicationsLister(
+        listkinds=[
+            ("publications", PublicationsArchiveListForPerson),
+                ],
+        researcher=researcher,
+        order_by="date",
+        request=context["request"],
+        )
+    context.update({"lister": lister})
+    return context
 
-@register.inclusion_tag('all_publications.html', takes_context = True)
-def get_all_entity_publications(context, entity = None):
-    """   
-    Lists all the Entity's articles
-    """
-    if entity == None:
-        entity = work_out_entity(context, entity)
-    if entity.abstract_entity:
-        real_entity = entity._get_real_ancestor
-    else: 
-        real_entity = entity
-    all_publications = BibliographicRecord.objects.filter(
-        authored__visible = True,
-        authored__researcher__person__member_of__entity__in=real_entity.get_descendants(include_self=True)) \
-            .distinct() \
-            .order_by('publication__type', '-publication_date')
-    ordered_publications = []    
-    for information in PUBLICATION_INFORMATION:
-        publication_type = information['type'] # because we cant use information['type'] inside a .filter()
-        publications = all_publications.filter(publication__type = publication_type).order_by('-publication_date',)
-        for publication in publications:
-            publication.kind = information['name']
-            ordered_publications.append(publication)    
-    return {
-        "all_publications": ordered_publications,
-        }        
 
-@register.inclusion_tag('entity_selected_publications.html', takes_context = True)
-def get_selected_entity_publications(context, heading=None, format = "short", max_items = 20, entity = None):
-    """   
-    Lists Entity's selected articles
-    """
-    selected_publications = []
-    if entity == None:
-        entity = work_out_entity(context, entity)
-    if entity.abstract_entity:
-        real_entity = entity._get_real_ancestor
-    else: 
-        real_entity = entity
-    all_publications = BibliographicRecord.objects.filter(authored__visible = True,
-        authored__researcher__person__member_of__entity__in=real_entity.get_descendants(include_self=True)
-        ).distinct()
-    for information in PUBLICATION_INFORMATION:
-        publication_type = information['type'] # because we want to use it a bit later
-        publications = all_publications.filter(publication__type = publication_type)
-        for publication in publications:
-            publication.template = "includes/" + publication_type + ".html"
-            selected_publications.append(publication)
-    selected_publications.sort(reverse = True, key=operator.attrgetter('publication_date'))
-    #selected_publications.sort(key=lambda x: x[0].publication_date)
-    return {"selected_publications": selected_publications[0:max_items],
-        "heading": heading,
-        "format": format,
-        "entity": entity,}
+# @register.inclusion_tag('all_publications.html', takes_context = True)
+# def get_all_person_publications(context, researcher = None):
+#     """   
+#     Lists all the Researcher's articles
+#     """
+#     if researcher == None:
+#         researcher = context.get('person').researcher
+#     all_publications = researcher.get_all_publications() \
+#         .distinct() \
+#         .order_by('-publication__type', '-publication_date')
+#     ordered_publications = []    
+#     for information in PUBLICATION_INFORMATION:
+#         publication_type = information['type'] # because we cant use information['type'] inside a .filter()
+#         publications = all_publications.filter(publication__type = publication_type).order_by('-publication_date',)
+#         for publication in publications:
+#             publication.kind = information['name']
+#             ordered_publications.append(publication)    
+#     return {
+#         "all_publications": ordered_publications,
+#       }                
+
+# @register.inclusion_tag('all_publications.html', takes_context = True)
+# def get_all_entity_publications(context, entity = None):
+#     """   
+#     Lists all the Entity's articles
+#     """
+#     if entity == None:
+#         entity = work_out_entity(context, entity)
+#     if entity.abstract_entity:
+#         real_entity = entity._get_real_ancestor
+#     else: 
+#         real_entity = entity
+#     all_publications = BibliographicRecord.objects.filter(
+#         authored__visible = True,
+#         authored__researcher__person__member_of__entity__in=real_entity.get_descendants(include_self=True)) \
+#             .distinct() \
+#             .order_by('publication__type', '-publication_date')
+#     ordered_publications = []    
+#     for information in PUBLICATION_INFORMATION:
+#         publication_type = information['type'] # because we cant use information['type'] inside a .filter()
+#         publications = all_publications.filter(publication__type = publication_type).order_by('-publication_date',)
+#         for publication in publications:
+#             publication.kind = information['name']
+#             ordered_publications.append(publication)    
+#     return {
+#         "all_publications": ordered_publications,
+#         }        
+# 
+# @register.inclusion_tag('entity_selected_publications.html', takes_context = True)
+# def get_selected_entity_publications(context, heading=None, format = "short", max_items = 20, entity = None):
+#     """   
+#     Lists Entity's selected articles
+#     """
+#     selected_publications = []
+#     if entity == None:
+#         entity = work_out_entity(context, entity)
+#     if entity.abstract_entity:
+#         real_entity = entity._get_real_ancestor
+#     else: 
+#         real_entity = entity
+#     all_publications = BibliographicRecord.objects.filter(authored__visible = True,
+#         authored__researcher__person__member_of__entity__in=real_entity.get_descendants(include_self=True)
+#         ).distinct()
+#     for information in PUBLICATION_INFORMATION:
+#         publication_type = information['type'] # because we want to use it a bit later
+#         publications = all_publications.filter(publication__type = publication_type)
+#         for publication in publications:
+#             publication.template = "includes/" + publication_type + ".html"
+#             selected_publications.append(publication)
+#     selected_publications.sort(reverse = True, key=operator.attrgetter('publication_date'))
+#     #selected_publications.sort(key=lambda x: x[0].publication_date)
+#     return {"selected_publications": selected_publications[0:max_items],
+#         "heading": heading,
+#         "format": format,
+#         "entity": entity,}

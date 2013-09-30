@@ -2,15 +2,12 @@ from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.http import Http404
 
-
 from contacts_and_people.models import Entity
 
 from arkestra_utilities.settings import MAIN_NEWS_EVENTS_PAGE_LIST_LENGTH, IN_BODY_HEADING_LEVEL
 
 from arkestra_utilities.generic_models import ArkestraGenericPlugin
 from cms_plugins import CMSPublicationsPlugin
-
-
 
 
 def common_settings(request, slug):
@@ -63,11 +60,11 @@ def publications(request, slug=None):
         )
     
     return render_to_response(
-        "contacts_and_people/arkestra_page.html",
+        "arkestra_utilities/entity_auto_page.html",
         context,
         )
 
-def publications_archive(request, slug):
+def publications_archive(request, slug=None):
     instance, context, entity = common_settings(request, slug)
 
 
@@ -93,7 +90,63 @@ def publications_archive(request, slug):
         )
     
     return render_to_response(
-        "contacts_and_people/arkestra_page.html",
+        "arkestra_utilities/entity_auto_page.html",
         context,
         )
+        
 
+from arkestra_utilities.views import ArkestraGenericView
+from arkestra_utilities.generic_lister import ArkestraGenericLister
+from arkestra_utilities.settings import MULTIPLE_ENTITY_MODE, MAIN_NEWS_EVENTS_PAGE_LIST_LENGTH
+
+from lister import PublicationsListLatest, PublicationsArchiveList
+
+
+class PublicationsView(ArkestraGenericView):
+    auto_page_attribute = "auto_publications_page" # really could get this from menu_dict
+
+    def get(self, request, *args, **kwargs):
+        self.get_entity()
+
+        self.lister = ArkestraGenericLister(
+            entity=self.entity,
+            request=self.request,
+            favourites_only=True,
+            listkinds=[
+                ("publications", PublicationsListLatest),
+                    ],
+            display="publications",
+            limit_to=MAIN_NEWS_EVENTS_PAGE_LIST_LENGTH,
+            )
+
+        self.main_page_body_file = "arkestra/generic_lister.html"
+        self.meta = {"description": "Latest key publications",}
+        self.title = unicode(self.entity) + u" latest key publications"
+        if MULTIPLE_ENTITY_MODE:
+            self.pagetitle = unicode(self.entity) + u" latest key publications"
+        else:
+            self.pagetitle = "Latest key publications"
+
+        return self.response(request)
+
+
+class PublicationsArchiveView(ArkestraGenericView):
+    auto_page_attribute = "auto_publications_page"
+
+    def get(self, request, *args, **kwargs):
+        self.get_entity()
+
+        self.lister = ArkestraGenericLister(
+            entity=self.entity,
+            request=self.request,
+            favourites_only=False,
+            listkinds=[("publications", PublicationsArchiveList)],
+            display="publications"
+            )
+
+        self.main_page_body_file = "arkestra/generic_filter_list.html"
+        self.meta = {"description": "Searchable archive of publications items",}
+        self.title = u"Research publications for %s" % unicode(self.entity)
+        self.pagetitle = u"Research publications for %s" % unicode(self.entity)
+
+        return self.response(request)

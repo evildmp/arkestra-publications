@@ -45,7 +45,9 @@ class PluginTests(TestCase):
         self.plugin.type = None
         self.plugin.view = "current"
         self.plugin.favourites_only = False
-        instance.get_items(self.plugin)
+        instance.render()
+        print instance.lister.lists
+
 
 class BibliographicRecordTests(TestCase):
     def test_copes_with_null_start_date(self):
@@ -194,16 +196,27 @@ class PublicationsEntityPagesNoAutoPageViewsTests(TestCase):
         response = self.client.get('/publications-archive/xxxx/')
         self.assertEqual(response.status_code, 404)
 
-from lister import PublicationsList
+from lister import PublicationsList, PublicationsLister
 
-class PublicationsLister(TestCase):
+class PublicationsListTests(TestCase):
+    def test_list_gets_an_item(self):
+        p = Publication(guid="test-publication-1")
+        p.save()
+        br = BibliographicRecord(publication=p)
+        br.save()
+        self.assertEqual(
+            set(PublicationsList().items),
+            set([br])
+            )
+
+class PublicationsListerTests(TestCase):
     def test_lister_gets_an_item(self):
         p = Publication(guid="test-publication-1")
         p.save()
         br = BibliographicRecord(publication=p)
         br.save()
         self.assertEqual(
-            set(PublicationsList().items), 
+            set(PublicationsLister().lists[0].items),
             set([br])
             )
 

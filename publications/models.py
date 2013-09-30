@@ -1,12 +1,13 @@
 #app = publications
+from datetime import datetime
 
 from django.db import models
 from django.template.defaultfilters import join, date
-from datetime import datetime
+from django.utils.functional import cached_property
+
 
 from contacts_and_people.models import Person, Entity
 
-#from cms.models import CMSPlugin
 CMSPlugin = models.get_model('cms', 'CMSPlugin')
 from cms.models.fields import PlaceholderField
 
@@ -14,22 +15,8 @@ from arkestra_utilities.generic_models import ArkestraGenericPluginOptions
 from arkestra_utilities.output_libraries.dates import nice_date
 from arkestra_utilities.settings import ARKESTRA_DATE_FORMATS, PLUGIN_HEADING_LEVELS, PLUGIN_HEADING_LEVEL_DEFAULT
 
-
-
-# @       @       @       @       @       @       @       @       @       @       @       @       @       @       @
-#  @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @
-#   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @
-#    @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @
-#     @       @       @       @       @       @       @       @       @       @       @       @       @       @       @
-
-
-# ***********************************************************************************************************************
-# *****  START: Link to contacts_and_people.Person                                                                  *****
-# ***********************************************************************************************************************
-
-
 class Researcher(models.Model):
-  #one-to-one link to contacts_and_people.Person
+    #one-to-one link to contacts_and_people.Person
     person = models.OneToOneField(
       'contacts_and_people.Person', 
       primary_key = True, related_name = "researcher", 
@@ -46,10 +33,10 @@ class Researcher(models.Model):
         related_name="research_description",
         help_text="research_description")
 
-  #symplectic specific info
+    #symplectic specific info
     publishes = models.BooleanField(default=False, help_text="Allows 'Research' and 'Publications' information to be edited and published", verbose_name="Is active in research and publishing",)
     
-  #info used regarding symplectic user over the api
+    #info used regarding symplectic user over the api
     symplectic_access = models.BooleanField(default=False, help_text="Symplectic API will be asked to allow this user access", verbose_name="Can login to Symplectic")  
     #Symplectic Elements v3.3.1 GUID [OLD]
     symplectic_id = models.CharField(blank=True, help_text = "Symplectic's own GUID for this user to be used by API", max_length=36, null=True, verbose_name="Symplectic User GUID (Deprecated)") 
@@ -62,61 +49,53 @@ class Researcher(models.Model):
     def __unicode__(self):
         return self.person.__unicode__()  
         
-  #return a list of authored for this researcher
+    #return a list of authored for this researcher
     def get_authoreds(self):
         return self.authored.filter(visible = True).order_by('publication__type', 'reverse_sort_cue')
   
-  #return a list of chosen bibliographic records for this researcher
+    #return a list of chosen bibliographic records for this researcher
     def get_all_publications(self):
         return BibliographicRecord.objects.filter(authored__visible = True, authored__researcher = self)
          
-  #remove all of the "i authored this publication" records for this researcher, but leave the publications themselves alone
+    #remove all of the "i authored this publication" records for this researcher, but leave the publications themselves alone
     def remove_all_authored(self):
-        self.authored.all().delete()
-          
+        self.authored.all().delete()          
 
-# ***********************************************************************************************************************
-# *****  FINISH: Link to contacts_and_people.Person                                                                 *****
-# ***********************************************************************************************************************
+    # @cached_property
+    # def publications(self):
+    #     # invoke the lister to find out more
+    #     lister = PersonPublicationsLister(
+    #         researcher=self,
+    #         order_by="date",
+    #         )
+    #     return lister
 
-
-
-# @       @       @       @       @       @       @       @       @       @       @       @       @       @       @
-#  @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @
-#   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @
-#    @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @
-#     @       @       @       @       @       @       @       @       @       @       @       @       @       @       @
-
-
-
-# ***********************************************************************************************************************
-# *****  START: Python Object of Symplectic Publication                                                             *****
-# ***********************************************************************************************************************
+# Python Object of Symplectic Publication
 
 class Publication(models.Model):
 
-  #publication attributes
-  #Symplectic Elements v3.3.1 GUID [OLD]
+    #publication attributes
+    #Symplectic Elements v3.3.1 GUID [OLD]
     guid = models.CharField(primary_key=True, max_length=255)
-  #Symplectic Elements v3.4 Integer ID [NEW] (Introduced in v3.4 but not utilised)
+    #Symplectic Elements v3.4 Integer ID [NEW] (Introduced in v3.4 but not utilised)
     new_id = models.IntegerField(null=True)
     is_deleted = models.BooleanField(default=False)
     type = models.CharField(max_length=255, null=True)
     created_when = models.TextField(null=True)
     last_modified_when = models.TextField(null=True)
-  #public-dspace-handle
+    #public-dspace-handle
     public_dspace_handle = models.CharField(max_length=255, null=True)
-  #does this local cached version need updating with latest symplectic version
+    #does this local cached version need updating with latest symplectic version
     needs_refetch = models.BooleanField(default=True)
 
-  #
+    #
     def __unicode__(self):
         return self.guid
         
-  # DONT try to override __init__ for a model!
+    # DONT try to override __init__ for a model!
   
 
-  #
+    #
     @staticmethod
     def getPublication(guid):
       try:
@@ -125,7 +104,7 @@ class Publication(models.Model):
       except (Publication.DoesNotExist,):
           return None
   
-  #    
+    #    
     @staticmethod    
     def getOrCreatePublication(guid):
       """
@@ -160,26 +139,26 @@ class BibliographicRecord(models.Model):
         ordering = ['-publication_date']
     
 
-  #composite-unique id
+    #composite-unique id
     id = models.CharField(primary_key=True, max_length=255)
 
-  #link a single parent publication
+    #link a single parent publication
     publication = models.ForeignKey(
       'Publication',
       related_name='bibliographic_records',
       )
 
-  #bibliographic-record attrib
+    #bibliographic-record attrib
     data_source = models.CharField(max_length=255)
     id_at_source = models.CharField(max_length=255, null=True)
-  #verification
+    #verification
     verification_status = models.TextField(null=True)
-  #urls
+    #urls
     # dealt with by foreign key in BiblioURL
-  #bibliometric data
+    #bibliometric data
     times_cited = models.TextField(null=True)
     reference_count = models.TextField(null=True)
-  #bibliographic data (native)
+    #bibliographic data (native)
     abstract = models.TextField(null=True)
     associated_authors = models.TextField(null=True)
     authors = models.TextField(null=True)    #combined
@@ -222,28 +201,28 @@ class BibliographicRecord(models.Model):
     title = models.TextField(null=True)
     version = models.TextField(null=True)
     volume = models.TextField(null=True)
-  #derived author data
+    #derived author data
     number_of_authors = models.IntegerField(default=0, null=True)
     first_author = models.TextField(null=True)
     last_author = models.TextField(null=True)
     
  
-  #override __save__ to create composite primary key
+    #override __save__ to create composite primary key
     def save(self):
         if self.publication is not None:
             self.id = self.publication.guid + ':' + self.data_source
             super(self.__class__, self).save()                   
             
-  #
+    #
     def __unicode__(self):
         if (self.publication is not None) and (self.data_source != ''):
             return self.publication.guid + ':' + self.data_source
         else:
             return 'Bibliography has No Publication'
             
-  # DONT try to override __init__ for a model! 
+    # DONT try to override __init__ for a model! 
  
-  #return info about biblio-record
+    #return info about biblio-record
     def get_url(self):
         try:
             return self.urls.all()[0].link
@@ -320,107 +299,6 @@ class BibliographicRecord(models.Model):
         get_when = nice_date(self.get_start_date(), ARKESTRA_DATE_FORMATS["date_groups"])
         return get_when
 
-  # #citation
-    # def cite(self):
-        # if self.publication is not None:
-            # if self.publication.type == '':
-                # return ''
-            # elif self.publication.type == 'book':
-                # return BibliographicRecord.__tidyCiteField(self.authors, ' ') + \
-                       # BibliographicRecord.__tidyCiteField(BibliographicRecord.__extractYear(self.publication_date), ') ', ' (') + \
-                       # BibliographicRecord.__tidyCiteField(self.title, '. ') + \
-                       # BibliographicRecord.__tidyCiteField(self.edition, '. ') + \
-                       # BibliographicRecord.__tidyCiteField(self.place_of_publication, ', ') + \
-                       # BibliographicRecord.__tidyCiteField(self.publisher, '.')
-            # elif self.publication.type == 'chapter':
-                # return BibliographicRecord.__tidyCiteField(self.authors, ' ') + \
-                       # BibliographicRecord.__tidyCiteField(BibliographicRecord.__extractYear(self.publication_date), ') ', ' (') + \
-                       # BibliographicRecord.__tidyCiteField(self.title, '. ') + \
-                       # 'in ' + \
-                       # BibliographicRecord.__tidyCiteField(self.editors, ' ') + \
-                       # BibliographicRecord.__tidyCiteField(self.book_title, '. ') + \
-                       # BibliographicRecord.__tidyCiteField(self.place_of_publication, ', ') + \
-                       # BibliographicRecord.__tidyCiteField(self.publisher, ', ') + \
-                       # BibliographicRecord.__tidyCiteField(self.begin_page, '-', 'pp ') + \
-                       # BibliographicRecord.__tidyCiteField(self.end_page, '.')
-            # elif self.publication.type == 'conference-proceeding':
-                # return BibliographicRecord.__tidyCiteField(self.name_of_conference, ', ') + \
-                       # BibliographicRecord.__tidyCiteField(BibliographicRecord.__extractYear(self.start_date), '. ') + \
-                       # BibliographicRecord.__tidyCiteField(self.location, ', ') + \
-                       # BibliographicRecord.__tidyCiteField(BibliographicRecord.__extractYear(self.publication_date), '). ', ' (') + \
-                       # BibliographicRecord.__tidyCiteField(self.title, ', ') + \
-                       # BibliographicRecord.__tidyCiteField(self.authors, '. ') + \
-                       # BibliographicRecord.__tidyCiteField(self.place_of_publication, ', ') + \
-                       # BibliographicRecord.__tidyCiteField(self.publisher, '.')   
-            # elif self.publication.type == 'CONFERENCE-PAPER':
-                # return BibliographicRecord.__tidyCiteField(self.authors, ' ') + \
-                       # BibliographicRecord.__tidyCiteField(BibliographicRecord.__extractYear(self.publication_date), ') ', ' (') + \
-                       # BibliographicRecord.__tidyCiteField(self.title, '. ') + \
-                       # 'in ' + \
-                       # BibliographicRecord.__tidyCiteField(self.editors, ' ') + \
-                       # BibliographicRecord.__tidyCiteField(self.name_of_conference, ', ') + \
-                       # BibliographicRecord.__tidyCiteField(self.start_date, '-') + \
-                       # BibliographicRecord.__tidyCiteField(self.finish_date, ', ') + \
-                       # BibliographicRecord.__tidyCiteField(self.location, '. ') + \
-                       # BibliographicRecord.__tidyCiteField(self.place_of_publication, ', ') + \
-                       # BibliographicRecord.__tidyCiteField(self.publisher, ',') + \
-                       # BibliographicRecord.__tidyCiteField(self.begin_page, '-', 'pp ') + \
-                       # BibliographicRecord.__tidyCiteField(self.end_page, '.')                                              
-            # elif self.publication.type == 'journal-article':
-                # return BibliographicRecord.__tidyCiteField(self.authors, ' ') + \
-                       # BibliographicRecord.__tidyCiteField(BibliographicRecord.__extractYear(self.publication_date), ') ', ' (') + \
-                       # BibliographicRecord.__tidyCiteField(self.title, '. ') + \
-                       # BibliographicRecord.__tidyCiteField(self.journal, '. ') + \
-                       # BibliographicRecord.__tidyCiteField(self.volume, ' ') + \
-                       # BibliographicRecord.__tidyCiteField(self.issue, ', ') + \
-                       # BibliographicRecord.__tidyCiteField(self.begin_page, '-', 'pp ') + \
-                       # BibliographicRecord.__tidyCiteField(self.end_page, '.')
-            # elif self.publication.type == 'patent':
-                # return 'patent - not yet coded'
-            # elif self.publication.type == 'report':
-                # return 'report - not yet coded'
-            # elif self.publication.type == 'software':
-                # return 'software - not yet coded'
-            # elif self.publication.type == 'performance':
-                # return 'performance - not yet coded'
-            # elif self.publication.type == 'composition':
-                # return 'composition - not yet coded'
-            # elif self.publication.type == 'design':
-                # return 'design - not yet coded'
-            # elif self.publication.type == 'artefact':
-                # return 'artefact - not yet coded'
-            # elif self.publication.type == 'exhibition':
-                # return 'exhibition - not yet coded'
-            # elif self.publication.type == 'other':
-                # return 'other - not yet coded'
-            # elif self.publication.type == 'internet-publication':
-                # return 'internet-publication - not yet coded'
-            # elif self.publication.type == 'scholarly-edition':
-                # return 'scholarly-edition - not yet coded'
-                
-  # # 
-    # @staticmethod  
-    # def __tidyCiteField(field, postspacer, prespacer = ''):
-        # if field is None:
-            # return ''
-        # elif field == '':
-            # return ''
-        # else:
-            # return prespacer + field + postspacer
-    
-  # #            
-    # @staticmethod
-    # def __extractYear(datestring, format = 'dd/mm/yyyy'):
-      # #
-        # if datestring is None:
-            # return ''
-        # elif datestring == '':
-            # return ''
-      # #
-        # if format == 'dd/mm/yyyy':
-            # return datestring[6:9]
-
-  #    
     @staticmethod    
     def getOrCreateBibliographicRecord(publication, data_source):
       """
@@ -443,82 +321,66 @@ class BibliographicRecord(models.Model):
           
 class BiblioURL(models.Model):
 
-  #link a single parent bibliographic-record
+    #link a single parent bibliographic-record
     bibliographic_record = models.ForeignKey(
       'BibliographicRecord',
       related_name='urls',
       )
   
-  #
     type = models.CharField(max_length=255, null=True,)
     link = models.TextField(null=True,)          
 
-# ***********************************************************************************************************************
-# *****  FINISH: Python Object of Symplectic Publication                                                            *****
-# ***********************************************************************************************************************
 
-
-
-# @       @       @       @       @       @       @       @       @       @       @       @       @       @       @
-#  @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @
-#   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @   @
-#    @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @     @ @
-#     @       @       @       @       @       @       @       @       @       @       @       @       @       @       @
-
-
-
-# ***********************************************************************************************************************
-# *****  START: Researcher Preferences for a SymplecticPublication                                                  *****
-# ***********************************************************************************************************************
+# Researcher Preferences for a SymplecticPublication 
 
 class Authored(models.Model):
 
-  #composite-unique id
+    #composite-unique id
     id = models.CharField(primary_key=True, max_length=255)
 
-  #link a single Researcher
+    #link a single Researcher
     researcher = models.ForeignKey(
       'Researcher',
       related_name='authored',
       )
 
-  #link a single SymplecticPublication
+    #link a single SymplecticPublication
     publication = models.ForeignKey(
       'Publication',
       related_name='authored',
       )
 
-  #indicate which BibliographicRecord the Researcher prefers
+    #indicate which BibliographicRecord the Researcher prefers
     bibliographic_record = models.ForeignKey(
       'BibliographicRecord',
       related_name='authored',
       )
 
-  #preferences from Symplectic
+    #preferences from Symplectic
     visible = models.BooleanField(default=False)
     is_a_favourite = models.BooleanField(default=False)
     reverse_sort_cue = models.CharField(max_length=255, null=True)
 
 
-  #override __save__ to create composite primary key
+    #override __save__ to create composite primary key
     def save(self):
         if (self.researcher is not None) and (self.publication is not None):
             # self.id = str(self.researcher.symplectic_int_id) + ':' + self.publication.guid # int_id version
             self.id = str(self.researcher.symplectic_id) + ':' + self.publication.guid # guid version
             super(self.__class__, self).save()
 
-  #
+    #
     def __unicode__(self):
         # return str(self.researcher) + ':' + str(self.publication)
         return self.researcher.__unicode__() + ':' + self.publication.__unicode__()
         
         
-  # DONT try to override __init__ for a model!
+    # DONT try to override __init__ for a model!
         
         
-  #    
-  # Note: bibliographic_record defaults to None as it is not essential to LOAD an Authored from DB, 
-  #       but it IS essential in order to CREATE & SAVE a new Authored
+    #    
+    # Note: bibliographic_record defaults to None as it is not essential to LOAD an Authored from DB, 
+    #       but it IS essential in order to CREATE & SAVE a new Authored
     @staticmethod    
     def getOrCreateAuthored(publication, researcher, bibliographic_record=None):
       """
@@ -538,10 +400,7 @@ class Authored(models.Model):
           authored.save()
           return authored          
 
-
-# ***********************************************************************************************************************
-# *****  FINISH: Researcher Preferences for a SymplecticPublication                                                 *****
-# ***********************************************************************************************************************
+# *****  FINISH: Researcher Preferences for a SymplecticPublication
 
 class PublicationsPlugin(CMSPlugin):
     entity = models.ForeignKey(Entity, null=True, blank=True, 

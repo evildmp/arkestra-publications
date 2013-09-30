@@ -23,8 +23,8 @@
 				{% for date in publicationdates %}
 					<li id = "{{ publication_set.grouper|slugify }}-{{ date.grouper }}">{{ date.grouper }}
 		        		<ul>
-							{% for publication in date.list %}
-								<li>{% include publication.template %}</li>
+							{% for item in date.list %}
+								<li>{% include item.template %}</li>
 							{% endfor %}
 						</ul>
 					</li>

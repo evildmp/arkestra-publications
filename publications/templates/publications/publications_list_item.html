@@ -1,0 +1,9 @@
+{% load thumbnail humanize typogrify_tags %}
+{% block list_item %}
+
+<li class = "{{ item.column_class }} {{ item.get_importance}}">
+
+{% include item.template %}
+
+</li>
+{% endblock list_item %}
