@@ -126,20 +126,7 @@ class PublicationsSelectedListForPerson(PublicationsList):
             authored__researcher=self.lister.researcher,
             ).distinct().order_by('-publication_date')[0:6]
 
-    def other_items(self):
-        other_items = []
-        # test for the various other_item_kinds that might be needed here
-        if "archived" in self.other_item_kinds:
-            other_items.append({
-                # where we'll find them
-                "link": self.entity.get_auto_page_url("publications-archive"),
-                # the link title
-                "title": "Archived publications",
-                # count them
-                "count": self.items_for_context.count()
-            })
-        return other_items
-        
+
 
 class PublicationsArchiveListForPerson(PublicationsArchiveList):
     def set_items_for_context(self):
