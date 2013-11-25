@@ -17,8 +17,8 @@
 		<span class = "item-details">
 			<cite class = "journal">{{ item.journal|lower|title }}</cite>{% if item.volume %},
 			Volume {{ item.volume }}{% endif %}{% if item.issue %},
-			{{ item.issue }}{% endif %}{% if item.get_item_date %}
-			({{ item.get_item_date }}){% endif %}
+			{{ item.issue }}{% endif %}{% if item.get_publication_date %}
+			({{ item.get_publication_date }}){% endif %}
 			{% if item.begin_page %}
 				{% if item.end_page %}
 					pp.{{ item.begin_page }}-{{item.end_page}}{% else %}p. {{ item.begin_page }}

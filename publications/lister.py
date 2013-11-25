@@ -1,85 +1,143 @@
 from django.utils.translation import ugettext_lazy as _
-from django.db.models import Q
+from django.core.cache import cache
 
-from django_easyfilters.filters import ForeignKeyFilter
+from arkestra_utilities.generic_lister import (
+    ArkestraGenericList, ArkestraGenericLister, ArkestraGenericFilterSet
+    )
+from arkestra_utilities.utilities import generate_key
 
-from arkestra_utilities.generic_lister import ArkestraGenericList, ArkestraGenericLister, ArkestraGenericFilterSet
-from arkestra_utilities.settings import MULTIPLE_ENTITY_MODE, MAIN_NEWS_EVENTS_PAGE_LIST_LENGTH
-
-from models import BibliographicRecord, Researcher, Authored
-
-from datetime import datetime
-
+from .models import BibliographicRecord, Researcher, Authored
 
 class PublicationsGenericFilterSet(ArkestraGenericFilterSet):
     fields = [
-        # ('authored__is_a_favourite', {}, ForeignKeyFilter), # won't work
-        # "publication_date",
+        # 'authored.is_a_favourite'
+        # ('authored__is_a_favourite', {}, ForeignKeyFilter),
+        # won't work "publication_date",
         ]
+
 
 class PublicationsList(ArkestraGenericList):
     model = BibliographicRecord
     heading_text = _(u"Publications")
+    favourites_only = False
     item_template = "publications/publications_list_item.html"
 
-    def set_items_for_context(self):
-        start = datetime.now()
-        # usually, the context for lists is the Entity we're publishing the
-        # lists for, but this could be Place or Person for Events, for example
-        # requires:     self.model.objects.listable_objects()
-        # sets:         self.items_for_context
+    def build(self):
+        self.items = self.model.objects.listable_objects()
 
-        entities = self.entity.get_real_ancestor.get_descendants(
+    # def select_favourites(self):
+    #     if self.favourites_only:
+    #         self.items = self.items.filter(authored__is_a_favourite=True)
+
+    def set_items_for_entity(self):
+        # requires:     self.model.objects.listable_objects()
+        # sets:         self.items
+
+        entities = self.entity.get_descendants(
             include_self=True
             ).values_list('id', flat=True)
-        researchers = Researcher.objects.filter(
-            person__member_of__entity__in=entities
-            ).distinct().values_list('person', flat=True)
 
-        if self.lister.favourites_only:
-            filter_for_favourites = Q(authored__is_a_favourite=True)
-        else:
-            filter_for_favourites = Q()
+        # print "entities", entities
 
-        publications = BibliographicRecord.objects.filter(
-            filter_for_favourites,
+        researchers = set(Researcher.objects.filter(
+            person__entities__in=entities
+            ).values_list('person', flat=True))
+
+        authoreds = Authored.objects.filter(
+            researcher__in=researchers,
+            visible=True,
+            ).values_list('bibliographic_record', flat=True)
+
+        # if self.favourites_only:
+        #     authoreds = authoreds.filter(is_a_favourite=True)
+
+        # print "researchers", researchers
+        #
+        # print BibliographicRecord.objects.listable_objects()
+
+        self.items = BibliographicRecord.objects.filter(
+                id__in=authoreds,
+                ).distinct()
+
+        # print "items", self.items
+
+    def set_items_for_person(self):
+        self.items = BibliographicRecord.objects.filter(
             authored__visible=True,
-            authored__researcher__in=researchers,
-            ).distinct().order_by('-publication_date')
-
-        self.items_for_context = publications
-        print publications.count(), datetime.now() - start
-
-    def additional_list_processing(self):
-        self.remove_expired()
-        self.re_order_by_importance() # expensive; shame it has to be here
-        self.truncate_items()
-        self.set_show_when()
+            authored__researcher=self.researcher,
+            ).distinct()
 
     def truncate_items(self):
-        # we use our own truncate_items() because the one on the generic
-        # plugin uses len(items)
+        # in some lists, we only ask for a certain number of items
         # acts on self.limit_to
-        if self.items.count() > self.limit_to:
-            self.items = self.items[:self.limit_to]
+
+        self.items = self.items[:self.limit_to]
 
     def other_items(self):
+
         other_items = []
         # test for the various other_item_kinds that might be needed here
         if "archived" in self.other_item_kinds:
+            # print "counting other items", self.__class__
             other_items.append({
                 # where we'll find them
-                "link": self.entity.get_auto_page_url("publications-archive"),
+                "link": self.entity.get_auto_page_url(
+                    "publications-archive"
+                    ),
                 # the link title
-                "title": "Archived publications",
+                "title": "Archive of publications",
                 # count them
-                "count": self.items_for_context.count()
+                "count": self.archived_items.count()
             })
+
         return other_items
+
+    def is_showable(self):
+        return True
 
 
 class PublicationsListLatest(PublicationsList):
     other_item_kinds = ("archived",)
+
+    def build(self):
+        key = generate_key(
+            self.__class__,
+            "build",
+            self.entity.id,
+            self.limit_to,
+            self.favourites_only
+            )
+        values = cache.get(key)
+        if not values:
+            self.items = self.model.objects.listable_objects()
+            self.set_items_for_entity()
+            self.archived_items = self.items
+            self.truncate_items()
+            # print "*", self.items
+
+            values = (self.items, self.archived_items)
+            cache.set(key, values, 60 * 60 * 12)
+
+        else:
+            (self.items, self.archived_items) = values
+
+
+class PublicationsListPlugin(PublicationsList):
+    other_item_kinds = ("archived",)
+
+    def build(self):
+        self.items = self.model.objects.all()
+        self.set_items_for_entity()
+        self.archived_items = self.items
+        self.truncate_items()
+
+
+class PublicationsListForPerson(PublicationsList):
+    def build(self):
+        self.items = self.model.objects.all()
+        self.set_items_for_person()
+        self.archived_items = self.items
+        self.truncate_items()
 
 
 class PublicationsArchiveList(PublicationsList):
@@ -113,27 +171,20 @@ class PublicationsArchiveList(PublicationsList):
         #     },
         ]
 
-    def additional_list_processing(self):
+    def build(self):
+        self.items = self.model.objects.listable_objects()
+        self.set_items_for_entity()
         self.filter_on_search_terms()
         self.itemfilter = self.filter_set(self.items, self.request.GET)
 
 
-class PublicationsSelectedListForPerson(PublicationsList):
-    def set_items_for_context(self):
-        self.items_for_context = BibliographicRecord.objects.filter(
-            authored__visible=True,
-            authored__is_a_favourite=True,
-            authored__researcher=self.lister.researcher,
-            ).distinct().order_by('-publication_date')[0:6]
-
-
-
 class PublicationsArchiveListForPerson(PublicationsArchiveList):
-    def set_items_for_context(self):
-        self.items_for_context = BibliographicRecord.objects.filter(
-            authored__visible=True,
-            authored__researcher=self.lister.researcher,
-            ).distinct().order_by('-publication_date')
+
+    def build(self):
+        self.items = self.model.objects.all()
+        self.set_items_for_person()
+        self.filter_on_search_terms()
+        self.itemfilter = self.filter_set(self.items, self.request.GET)
 
     search_fields = [
         {
@@ -156,19 +207,38 @@ class PublicationsArchiveListForPerson(PublicationsArchiveList):
 
 
 class PublicationsLister(ArkestraGenericLister):
-    listkinds=[
-        ("publications", PublicationsList),
-            ]
+    listkinds = [
+        ("publications", PublicationsListLatest),
+        ]
     display = "publications"
-    other_item_kinds = ("archived")
 
 
-class PublicationsMenuLister(object):
-    lists = True
-    def __init__(self, **kwargs):
-        pass
-    # favourites_only = False
-    # listkinds=[
-    #     ("publications", PublicationsList),
-    #         ]
-    # display = "publications"
+
+class PublicationsMenuList(PublicationsList):
+
+
+    def other_items(self):
+
+        other_items = [{
+            # where we'll find them
+            "link": self.entity.get_auto_page_url(
+                "publications-archive"
+                ),
+            # the link title
+            "title": "Archive",
+            }]
+
+        return other_items
+
+    def build(self):
+        # if the Lister has lists, then the menu system will create a node
+        # for it without actually having to calculate whether there are any
+        # items in the lists
+        self.items = True
+
+
+class PublicationsMenuLister(ArkestraGenericLister):
+    listkinds = [
+        ("publications", PublicationsMenuList),
+        ]
+    display = "publications"

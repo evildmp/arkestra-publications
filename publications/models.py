@@ -3,6 +3,7 @@ from datetime import datetime
 
 from django.db import models
 from django.template.defaultfilters import date
+from django.core.cache import cache
 
 from contacts_and_people.models import Entity
 
@@ -27,8 +28,8 @@ class Researcher(models.Model):
         touch this.
         """
         )
-    research_synopsis = models.TextField(null=True, blank=True)
-    research_description = models.TextField(blank=True, null=True)
+    # research_synopsis = models.TextField(null=True, blank=True)
+    # research_description = models.TextField(blank=True, null=True)
 
     synopsis = PlaceholderField(
         'body',
@@ -114,7 +115,7 @@ class Publication(models.Model):
 
     # publication attributes
     # Symplectic Elements v3.3.1 GUID [OLD]
-    guid = models.CharField(primary_key=True, max_length=255)
+    guid = models.CharField(unique=True, max_length=255)
     # Symplectic Elements v3.4 Integer ID [NEW]
     # (Introduced in v3.4 but not utilised)
     new_id = models.IntegerField(null=True)
@@ -171,12 +172,19 @@ publication_kinds = {
     }
 
 
+class BibliographicRecordlManager(models.Manager):
+    def listable_objects(self):
+        return self.model.objects.filter(authored__visible=True)
+
+
 class BibliographicRecord(models.Model):
     class Meta:
         ordering = ['-publication_date']
 
-    # composite-unique id
-    id = models.CharField(primary_key=True, max_length=255)
+    objects = BibliographicRecordlManager()
+
+    # # composite-unique id
+    # id = models.CharField(primary_key=True, max_length=255)
 
     # link a single parent publication
     publication = models.ForeignKey(
@@ -239,18 +247,32 @@ class BibliographicRecord(models.Model):
     volume = models.TextField(null=True)
     # derived author data
     number_of_authors = models.IntegerField(default=0, null=True)
-    first_author = models.TextField(null=True)
-    last_author = models.TextField(null=True)
+    first_author = models.TextField()
+    last_author = models.TextField()
 
-    # override __save__ to create composite primary key
+    # # override __save__ to create composite primary key
     def save(self):
+        # print "      actually saving"
         if self.publication is not None:
-            self.id = self.publication.guid + ':' + self.data_source
+            # self.id = self.publication.guid + ':' + self.data_source
+            try:
+                br = BibliographicRecord.objects.get(
+                    publication=self.publication,
+                    data_source=self.data_source
+                    )
+                self.id = br.id
+                # print "             saving an existing BibliographicRecord"
+            except BibliographicRecord.DoesNotExist:
+                # print "             creating a new BibliographicRecord
+                pass
             super(self.__class__, self).save()
+        else:
+            # print "giving up, no publication"
+            pass
 
     def __unicode__(self):
-        if (self.publication is not None) and (self.data_source != ''):
-            return self.publication.guid + ':' + self.data_source
+        if self.publication is not None:
+            return self.publication.guid
         else:
             return 'Bibliography has No Publication'
 
@@ -334,7 +356,10 @@ class BibliographicRecord(models.Model):
                     return self.finish_date
 
     def template(self):
-        return "includes/" + self.publication.type + ".html"
+        try:
+            return "includes/" + self.publication.type + ".html"
+        except TemplateDoesNotExist:
+            return "includes/other.html"
 
     def kind(self):
         return publication_kinds.setdefault(
@@ -364,11 +389,14 @@ class BibliographicRecord(models.Model):
         links to the publication and datasource passed in
         """
         try:
+            # print "        looking for pubication", publication, "data source", data_source
             biblio = BibliographicRecord.objects.get(
                 publication=publication, data_source=data_source
                 )
+            # print "        got", biblio.id
             return biblio
         except BibliographicRecord.DoesNotExist:
+            # print "        didn't get it"
             # NB DONT try to override __init__ for a model!
             biblio = BibliographicRecord()
             biblio.publication = publication
@@ -388,25 +416,19 @@ class BiblioURL(models.Model):
     type = models.CharField(max_length=255, null=True,)
     link = models.TextField(null=True,)
 
-# Researcher Preferences for a SymplecticPublication
 
+# Researcher Preferences for a SymplecticPublication
 
 class Authored(models.Model):
 
     #composite-unique id
-    id = models.CharField(primary_key=True, max_length=255)
+    # id = models.CharField(primary_key=True, max_length=255)
 
     #link a single Researcher
-    researcher = models.ForeignKey(
-        'Researcher',
-        related_name='authored',
-        )
+    researcher = models.ForeignKey('Researcher',related_name='authored')
 
     #link a single SymplecticPublication
-    publication = models.ForeignKey(
-        'Publication',
-        related_name='authored',
-        )
+    publication = models.ForeignKey('Publication', related_name='authored')
 
     #indicate which BibliographicRecord the Researcher prefers
     bibliographic_record = models.ForeignKey(
@@ -419,12 +441,30 @@ class Authored(models.Model):
     is_a_favourite = models.BooleanField(default=False)
     reverse_sort_cue = models.CharField(max_length=255, null=True)
 
-    #override __save__ to create composite primary key
+    # # #override __save__ to create composite primary key
+    # def save(self):
+    #     if (self.researcher is not None) and (self.publication is not None):
+    #         self.id = str(self.researcher.symplectic_id) + ':' + \
+    #             self.publication.guid  # guid version
+    #         super(self.__class__, self).save()
+    #
+    # # # override __save__ to create composite primary key
     def save(self):
+        # print "      actually saving Authored"
         if (self.researcher is not None) and (self.publication is not None):
-            self.id = str(self.researcher.symplectic_id) + ':' + \
-                self.publication.guid  # guid version
+            # self.id = self.publication.guid + ':' + self.data_source
+            try:
+                au = Authored.objects.get(
+                    researcher=self.researcher,
+                    publication=self.publication
+                    )
+                self.id = au.id
+                # print "        saving an existing Authored"
+            except Authored.DoesNotExist:
+                # print "        creating a new Authored"
+                pass
             super(self.__class__, self).save()
+
 
     def __unicode__(self):
         # return str(self.researcher) + ':' + str(self.publication)
