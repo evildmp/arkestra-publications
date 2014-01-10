@@ -2,12 +2,14 @@
 from datetime import datetime
 
 from django.db import models
+from django.template import TemplateDoesNotExist
 from django.template.defaultfilters import date
 from django.core.cache import cache
 
 from contacts_and_people.models import Entity
 
-CMSPlugin = models.get_model('cms', 'CMSPlugin')
+from cms.models.pluginmodel import CMSPlugin
+# CMSPlugin = models.get_model('cms', 'CMSPlugin')
 from cms.models.fields import PlaceholderField
 
 from arkestra_utilities.output_libraries.dates import nice_date

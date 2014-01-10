@@ -15,7 +15,7 @@ from contacts_and_people.templatetags.entity_tags import work_out_entity
 
 from models import PublicationsPlugin, BibliographicRecord, PublicationsPlugin
 from menu import menu_dict
-from .lister import PublicationsListPlugin, PublicationsLister
+from .lister import PublicationsListLatest, PublicationsLister
 from datetime import datetime
 
 class PublicationsPluginForm(ArkestraGenericPluginForm, forms.ModelForm):
@@ -68,7 +68,7 @@ class CMSPublicationsPlugin(ArkestraGenericPlugin, AutocompleteMixin, CMSPluginB
 
         self.lister = PublicationsLister(
             listkinds=[
-                ("publications", PublicationsListPlugin),
+                ("publications", PublicationsListLatest),
                 ],
             entity=self.entity,
             limit_to=instance.limit_to,

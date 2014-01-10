@@ -304,9 +304,10 @@ def get_user_ids(researcher_list):
     ids = []
     # For each researcher, ask symplectic for their Symplectic-id
     for researcher in researcher_list:
+        print researcher
         SymplecticID = _get_users(researcher)
-    if SymplecticID and SymplecticID != '':
-        ids.append(SymplecticID)
+        if SymplecticID and SymplecticID != '':
+            ids.append(SymplecticID)
     return ids
 
 

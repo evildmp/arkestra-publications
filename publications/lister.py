@@ -1,4 +1,5 @@
 from django.utils.translation import ugettext_lazy as _
+from django.utils.functional import cached_property
 from django.core.cache import cache
 
 from arkestra_utilities.generic_lister import (
@@ -33,33 +34,63 @@ class PublicationsList(ArkestraGenericList):
         # requires:     self.model.objects.listable_objects()
         # sets:         self.items
 
+        # first we get the entities we care about
         entities = self.entity.get_descendants(
             include_self=True
             ).values_list('id', flat=True)
 
-        # print "entities", entities
-
+        # and from the entities the researchers
         researchers = set(Researcher.objects.filter(
             person__entities__in=entities
             ).values_list('person', flat=True))
 
-        authoreds = Authored.objects.filter(
-            researcher__in=researchers,
-            visible=True,
-            ).values_list('bibliographic_record', flat=True)
+        # -------- original solution -------
 
-        # if self.favourites_only:
-        #     authoreds = authoreds.filter(is_a_favourite=True)
+        # This should be the optimal solution, but with smaller
+        # entities queries can take 29 seconds!
 
-        # print "researchers", researchers
+        # authoreds = Authored.objects.filter(
+        #     researcher__in=researchers,
+        #     visible=True,
+        #     ).values_list('bibliographic_record', flat=True)
         #
-        # print BibliographicRecord.objects.listable_objects()
+        # # if self.favourites_only:
+        # #     authoreds = authoreds.filter(is_a_favourite=True)
+        #
+        # self.items = BibliographicRecord.objects.filter(
+        #         id__in=authoreds,
+        #         ).distinct()
+
+
+        # -------- coerced solution -------
+
+        authoreds = list(
+            Authored.objects.filter(
+                researcher__in=researchers,
+                visible=True,
+                ).values_list('bibliographic_record', flat=True)
+            )
 
         self.items = BibliographicRecord.objects.filter(
                 id__in=authoreds,
                 ).distinct()
 
-        # print "items", self.items
+        # -------- Ben's solution 1 -------
+
+        # self.items = BibliographicRecord.objects.filter(
+        #         publication__authored__researcher__in=researchers,
+        #         ).distinct()
+
+
+        # -------- Ben's solution 2 -------
+
+        # self.items = BibliographicRecord.objects.filter(
+        #         authored__researcher__in=researchers,
+        #         ).distinct()
+
+        if self.favourites_only:
+            self.items = self.items.filter(authored__is_a_favourite=True)
+
 
     def set_items_for_person(self):
         self.items = BibliographicRecord.objects.filter(
@@ -67,12 +98,16 @@ class PublicationsList(ArkestraGenericList):
             authored__researcher=self.researcher,
             ).distinct()
 
+        if self.favourites_only:
+            self.items = self.items.filter(authored__is_a_favourite=True)
+
     def truncate_items(self):
         # in some lists, we only ask for a certain number of items
         # acts on self.limit_to
 
         self.items = self.items[:self.limit_to]
 
+    @cached_property
     def other_items(self):
 
         other_items = []
@@ -87,7 +122,7 @@ class PublicationsList(ArkestraGenericList):
                 # the link title
                 "title": "Archive of publications",
                 # count them
-                "count": self.archived_items.count()
+                "count": self.archived_items_count
             })
 
         return other_items
@@ -109,24 +144,27 @@ class PublicationsListLatest(PublicationsList):
             )
         values = cache.get(key)
         if not values:
+            # print "failed to get cache for ", self.__class__, key
+
             self.items = self.model.objects.listable_objects()
             self.set_items_for_entity()
-            self.archived_items = self.items
+            self.archived_items_count = self.items.count()
             self.truncate_items()
-            # print "*", self.items
 
-            values = (self.items, self.archived_items)
-            cache.set(key, values, 60 * 60 * 12)
+            values = (self.items, self.archived_items_count)
+            # print cache.set(key, values, 60 * 60 * 12)
 
         else:
-            (self.items, self.archived_items) = values
+            # print "got cache for ", self.__class__
+            (self.items, self.archived_items_count) = values
 
 
 class PublicationsListPlugin(PublicationsList):
     other_item_kinds = ("archived",)
 
     def build(self):
-        self.items = self.model.objects.all()
+        # print "getting items for ", self.__class__
+        self.items = self.model.objects.listable_objects()
         self.set_items_for_entity()
         self.archived_items = self.items
         self.truncate_items()

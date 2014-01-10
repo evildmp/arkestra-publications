@@ -43,10 +43,8 @@ class PublicationsArchiveView(ArkestraGenericView):
             display="publications"
             )
 
-        print self.lister.lists[0].items
         self.main_page_body_file = "arkestra/generic_filter_list.html"
         self.meta = {"description": "Searchable archive of publications items"}
         self.title = u"Archive of publications for %s" % unicode(self.entity)
         self.pagetitle = u"Archive of publications for %s" % unicode(self.entity)
-
         return self.response(request)
