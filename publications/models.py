@@ -167,7 +167,7 @@ class Publication(models.Model):
 publication_kinds = {
     "book": "Monograph",
     "chapter": "Chapter",
-    "journal-article": "Jounal article",
+    "journal-article": "Journal article",
     "conference-proceeding": "Conference paper",
     "report": "Report",
     "other": "Other publication",
