@@ -93,13 +93,20 @@ class PublicationsList(ArkestraGenericList):
 
 
     def set_items_for_person(self):
-        self.items = BibliographicRecord.objects.filter(
-            authored__visible=True,
-            authored__researcher=self.researcher,
-            ).distinct()
+        # find the visible authoreds for the researcher
+        authoreds = Authored.objects.filter(
+            researcher=self.researcher,
+            visible=True
+            )
 
+        # if necessary, get the favourites only
         if self.favourites_only:
-            self.items = self.items.filter(authored__is_a_favourite=True)
+            authoreds = authoreds.filter(is_a_favourite=True)
+
+        # find the matching Bibliographic records
+        self.items = BibliographicRecord.objects.filter(
+                id__in=authoreds.values_list('bibliographic_record', flat=True),
+                ).distinct()
 
     def truncate_items(self):
         # in some lists, we only ask for a certain number of items
@@ -172,7 +179,7 @@ class PublicationsListPlugin(PublicationsList):
 
 class PublicationsListForPerson(PublicationsList):
     def build(self):
-        self.items = self.model.objects.all()
+        self.items = self.model.objects.listable_objects()
         self.set_items_for_person()
         self.archived_items = self.items
         self.truncate_items()
@@ -219,7 +226,7 @@ class PublicationsArchiveList(PublicationsList):
 class PublicationsArchiveListForPerson(PublicationsArchiveList):
 
     def build(self):
-        self.items = self.model.objects.all()
+        self.items = self.model.objects.listable_objects()
         self.set_items_for_person()
         self.filter_on_search_terms()
         self.itemfilter = self.filter_set(self.items, self.request.GET)
