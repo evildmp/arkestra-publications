@@ -45,7 +45,6 @@ class Command(BaseCommand):
             ).filter(
             Q(symplectic_id__isnull=True) | Q(symplectic_id__exact="")
             )
-        print "missing_list", missing_list
 
         id_list = get_user_ids(missing_list)
         print "ID list", id_list

@@ -12,7 +12,9 @@ class Command(BaseCommand):
 
         self.stdout.write('\nGet mini details of each Researcher`s Publications\n')
         # for researcher in Researcher.objects.filter(publishes=True).exclude(symplectic_int_id__isnull=True):  # for int_id version
-        for researcher in Researcher.objects.filter(publishes=True).exclude(symplectic_id__isnull=True):  # for guid version
+        for researcher in Researcher.objects.filter(
+            publishes=True
+            ).exclude(symplectic_id__isnull=True):  # for guid version
             self.stdout.write('    %s\n' % str(researcher))
 
 

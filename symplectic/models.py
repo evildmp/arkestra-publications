@@ -1,5 +1,6 @@
 #app = symplectic
 
+from datetime import datetime
 import urllib
 from elementtree.ElementTree import ElementTree, Element, SubElement, XML
 from xml.parsers.expat import ExpatError
@@ -25,6 +26,8 @@ SYMPLECTIC_LOCAL_USER_CLEARFILE = 'clear_users.xml'
 
 AUTHENTICATING_AUTHORITY = 'CARDIFFLDAP'
 IMPORT_USERS_FEED_ID = 'django arkestra'
+
+TIMESTAMP = str(datetime.now())
 
 
 class User(object):
@@ -86,9 +89,11 @@ def __createXMLFileForClear():
     xml_filename = "".join([
         SYMPLECTIC_LOCAL_XML_FOLDER,
         SYMPLECTIC_LOCAL_USER_FOLDER,
+        TIMESTAMP,
         SYMPLECTIC_LOCAL_USER_CLEARFILE
         ])
     ElementTree(clear_root).write(xml_filename)
+    print "clearing with", xml_filename
     return xml_filename
 
 
@@ -254,11 +259,12 @@ def _create_xml_users_file(user_objectlist):
     xml_filename = "".join([
         SYMPLECTIC_LOCAL_XML_FOLDER,
         SYMPLECTIC_LOCAL_USER_FOLDER,
+        TIMESTAMP,
         SYMPLECTIC_LOCAL_USER_IMPORTFILE
         ])
     ElementTree(users_root).write(xml_filename)
-
     #Return xml filename
+    print "writing with", xml_filename
     return xml_filename
 
 
@@ -286,10 +292,10 @@ def _create_symplectic_user_list(researcher_list):
         else:
             user_object.generic_field_13_admin = 'N'
         institute = _determine_institute(researcher)
-        if (institute):
-            user_object.generic_field_14_institute = institute.name
-        if (institute):
-            user_object.generic_field_15_institute_id = str(institute.id)
+        # if (institute):
+        #     user_object.generic_field_14_institute = institute.name
+        # if (institute):
+        #     user_object.generic_field_15_institute_id = str(institute.id)
         user_objectlist.append(user_object)
     return user_objectlist
 
