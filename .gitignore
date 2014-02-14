@@ -11,6 +11,7 @@
 *.cache
 *~
 *#
+*.egg-info
 
 # OS or Editor folders
 .DS_Store
@@ -25,6 +26,7 @@ nbproject
 *.sublime-workspace
 .tm_properties
 ._*
+.fuse_hidden*
 
 # Folders to ignore
 .hg

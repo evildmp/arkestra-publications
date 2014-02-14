@@ -1,94 +1,50 @@
-from django.shortcuts import render_to_response, get_object_or_404
-from django.template import RequestContext
-from django.http import Http404
+from arkestra_utilities.views import ArkestraGenericView
+from arkestra_utilities.generic_lister import ArkestraGenericLister
+from arkestra_utilities.settings import MULTIPLE_ENTITY_MODE
 
-from contacts_and_people.models import Entity
-
-from arkestra_utilities.settings import MAIN_NEWS_EVENTS_PAGE_LIST_LENGTH, IN_BODY_HEADING_LEVEL
-
-from arkestra_utilities.generic_models import ArkestraGenericPlugin
-from cms_plugins import CMSPublicationsPlugin
-
-def common_settings(request, slug):
-    if slug:
-        entity = get_object_or_404(Entity, slug=slug)
-    else:
-        entity = Entity.objects.base_entity()
-    if not (entity.website and entity.website.published and entity.auto_publications_page):
-        raise Http404 
-
-    
-    request.auto_page_url = request.path
-    # request.path = entity.get_website.get_absolute_url() # for the menu, so it knows where we ares
-    request.current_page = entity.get_website
-    context = RequestContext(request)
-    instance = ArkestraGenericPlugin()
-    instance.limit_to = MAIN_NEWS_EVENTS_PAGE_LIST_LENGTH
-    instance.default_limit = MAIN_NEWS_EVENTS_PAGE_LIST_LENGTH
-    instance.order_by = "importance/date"
-    instance.entity = entity
-    instance.heading_level = IN_BODY_HEADING_LEVEL
-    instance.display = "news-and-events"
-    instance.format = "details image"
-    instance.view = "current"
-    instance.main_page_body_file = "publications/publications.html"
-    return instance, context, entity
+from lister import PublicationsLister, PublicationsArchiveList
 
 
-def publications(request, slug):
-    instance, context, entity = common_settings(request, slug)    
+class PublicationsView(ArkestraGenericView):
+    # really could get this from menu_dict
+    auto_page_attribute = "auto_publications_page"
 
-    instance.type = "main_page"
-    instance.favourites_only = True
+    def get(self, request, *args, **kwargs):
+        self.get_entity()
+        self.lister = PublicationsLister(
+            entity=self.entity,
+            request=self.request,
+            favourites_only=True,
+            limit_to=10,
+            )
 
-    meta = {"description": "Recent academic research publications",}
+        self.main_page_body_file = "arkestra/generic_lister.html"
+        self.meta = {"description": "Latest key publications"}
+        self.title = unicode(self.entity) + u" latest publications"
+        if MULTIPLE_ENTITY_MODE:
+            self.pagetitle = unicode(self.entity) + u" latest publications"
+        else:
+            self.pagetitle = "Latest key publications"
 
-    title = str(entity)  + " recent publications"
-    pagetitle = "Recent publications"
-    
-    CMSPublicationsPlugin().render(context, instance, None)
-    
-    context.update({
-        "entity":entity,
-        "title": title,
-        "meta": meta,
-        "pagetitle": pagetitle,
-        "main_page_body_file": instance.main_page_body_file,
-        'everything': instance,
-        }
-        )
-    
-    return render_to_response(
-        "contacts_and_people/arkestra_page.html",
-        context,
-        )
-
-def publications_archive(request, slug):
-    instance, context, entity = common_settings(request, slug)
+        return self.response(request)
 
 
-    instance.type = "sub_page"
-    instance.view = "archive"
-    instance.display = "publications"
-    instance.limit_to = None
-    instance.order_by = "date"
+class PublicationsArchiveView(ArkestraGenericView):
+    auto_page_attribute = "auto_publications_page"
 
-    CMSPublicationsPlugin().render(context, instance, None)
+    def get(self, request, *args, **kwargs):
+        self.get_entity()
 
-    meta = {"description": "Archive of publications",}
-    title = str(entity)  + " - publications archive"
-    pagetitle = str(entity) + " - publications archive"
+        self.lister = ArkestraGenericLister(
+            entity=self.entity,
+            request=self.request,
+            favourites_only=False,
+            listkinds=[("publications", PublicationsArchiveList)],
+            display="publications"
+            )
 
-    context.update({
-        "entity":entity,
-        "title": title,
-        "meta": meta,
-        "pagetitle": pagetitle,
-        "main_page_body_file": instance.main_page_body_file,
-        'everything': instance,}
-        )
-    
-    return render_to_response(
-        "contacts_and_people/arkestra_page.html",
-        context,
-        )
+        self.main_page_body_file = "arkestra/generic_filter_list.html"
+        self.meta = {"description": "Searchable archive of publications items"}
+        self.title = u"Archive of publications for %s" % unicode(self.entity)
+        self.pagetitle = u"Archive of publications for %s" % unicode(self.entity)
+        return self.response(request)

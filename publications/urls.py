@@ -1,15 +1,33 @@
 from django.conf.urls.defaults import patterns, url
+from publications import views
 
 urlpatterns = patterns('',
-    
-    url(r"^publications/(?:(?P<slug>[-\w]+)/)?$", "publications.views.publications", name="publications"),
-    url(r"^publications-archive/(?:(?P<slug>[-\w]+)/)?$", "publications.views.publications_archive", name="publications_archive"),
 
     # # named entities' publications
-    # (r"^publications/(?P<slug>[-\w]+)/$", "publications.views.publications"),
-    # (r'^publications-archive/(?P<slug>[-\w]+)/$', "publications.views.publications_archive"),
-    # 
-    # # base entity's publications
-    # (r'^publications/$', "publications.views.publications"),    
-    # (r'^publications-archive/$', "publications.views.publications_archive"),
-)  
+    url(
+        r"^publications/(?:(?P<slug>[-\w]+)/)$",
+        views.PublicationsView.as_view(),
+        name="publications"
+        ),
+
+    url(
+        r"^publications-archive/(?:(?P<slug>[-\w]+)/)$",
+        views.PublicationsArchiveView.as_view(),
+        name="publications-archive"
+        ),
+
+    # base entity's publications
+    url(
+        r'^publications/$',
+        views.PublicationsView.as_view(),
+        {"slug": None},
+        name="publications-base"
+        ),
+
+    url(
+        r'^publications-archive/$',
+        views.PublicationsArchiveView.as_view(),
+        {"slug": None},
+        name="publications-archive-base"
+        ),
+)

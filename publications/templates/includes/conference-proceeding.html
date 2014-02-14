@@ -1,30 +1,30 @@
 {% spaceless %}
 <cite class = "conference-proceedings">
-	{% if publication.get_url %}<a href = "{{ publication.get_url }}"><strong>{{ publication.title }}</strong></a>
-	{% else %}<strong>{{ publication.title }}</strong>
+	{% if item.get_url %}<a href = "{{ item.get_url }}"><strong>{{ item.title }}</strong></a>
+	{% else %}<strong>{{ item.title }}</strong>
 	{% endif %}
 </cite>
-<br />{{ publication.authors }}
+<br />{{ item.authors }}
 {% ifequal everything.format "short" %}
 	<span class = "publication-details">
-		<cite class = "journal">{{ publication.journal|lower|title }}</cite>
+		<cite class = "journal">{{ item.journal|lower|title }}</cite>
     </span>
 {% else %}
-	<span class = "publication-details">{% if publication.location %}, {{ publication.location|lower|title }}{% endif %}
-		{% if publication.start_date %}({{ publication.get_start_date }}){% endif %}
+	<span class = "publication-details">{% if item.location %}, {{ item.location|lower|title }}{% endif %}
+		{% if item.start_date %}({{ item.get_start_date }}){% endif %}
 		
-		<cite class = "journal">{{ publication.journal|lower|title }}</cite>{% if publication.volume %}, 
-		Volume {{ publication.volume }}{% endif %}{% if publication.issue %}, 
-		{{ publication.issue }}{% endif %}
-    	{% if publication.get_publication_date %}({{ publication.get_publication_date }}){% endif %}
-    	{% if publication.begin_page %}
-			{% if publication.end_page %}pp.{{ publication.begin_page }}-{{publication.end_page}}{% else %}p. {{ publication.begin_page }}
+		<cite class = "journal">{{ item.journal|lower|title }}</cite>{% if item.volume %}, 
+		Volume {{ item.volume }}{% endif %}{% if item.issue %}, 
+		{{ item.issue }}{% endif %}
+    	{% if item.get_publication_date %}({{ item.get_publication_date }}){% endif %}
+    	{% if item.begin_page %}
+			{% if item.end_page %}pp.{{ item.begin_page }}-{{item.end_page}}{% else %}p. {{ item.begin_page }}
 			{% endif %}
 		{% endif %}
 	</span>
 {% endifequal %}
-{% if publication.editors %}
-    Edited by {{ publication.editors }}
+{% if item.editors %}
+    Edited by {{ item.editors }}
 {% endif %}
 {% endspaceless %}
 
