@@ -15,8 +15,12 @@ class Command(BaseCommand):
         for researcher in Researcher.objects.filter(
             publishes=True
             ).exclude(symplectic_id__isnull=True):  # for guid version
-            self.stdout.write('    %s\n' % str(researcher))
+            self.stdout.write('    %s %s\n' % (
+                str(researcher),
+                str(researcher.person_id)
+                ))
 
+            get_authoreds(researcher)
 
             # try:
             #     self.stdout.write('    %s\n' % str(researcher))
@@ -29,15 +33,22 @@ class Command(BaseCommand):
 
 
         self.stdout.write('\nFlag Publications modified within last 2 days\n')
-        twodaysago = datetime.date.today() - datetime.timedelta(2)
+        twodaysago = datetime.date.today() - datetime.timedelta(5)
         since = str(twodaysago.year) + '-' + str(twodaysago.month) + '-' + str(twodaysago.day)
         self.stdout.write('since: %s\n' % since)
         mark_changed_publications(since)
 
 
         self.stdout.write('\nGet full details of flagged Publications\n')
+        self.stdout.write(str(
+            Publication.objects.filter(needs_refetch = True).count()
+            ) + '\n')
         for publication in Publication.objects.filter(needs_refetch = True):
-            self.stdout.write(str(publication) + "\n")
+            try:
+                self.stdout.write(str(publication) + " " + str(publication.bibliographic_records.all()[0].title) + "\n")
+            except UnicodeEncodeError:
+                self.stdout.write(str(publication) + "Unicode error!" + "\n")
+
             update_publication(publication)
 
 
