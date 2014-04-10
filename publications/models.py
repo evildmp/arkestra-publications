@@ -273,6 +273,7 @@ class BibliographicRecord(models.Model):
             pass
 
     def __unicode__(self):
+        return self.title
         if self.publication is not None:
             return self.publication.guid
         else:

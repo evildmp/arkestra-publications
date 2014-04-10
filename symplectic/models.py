@@ -708,8 +708,8 @@ def _create_biblio_object(biblio_element, publication_object):
                 author_element.find(SYMPLECTIC_NAMESPACE + 'initials')
                 )
             author_list.append(unicode(name) + ' ' + unicode(initials))
-        for author in author_list:
-            biblio_object.authors = biblio_object.authors + author + ', '
+        biblio_object.authors = ", ".join(author_list)
+        print biblio_object.authors
         #derived authors
         biblio_object.number_of_authors = len(author_list)
         if len(author_list) > 0:

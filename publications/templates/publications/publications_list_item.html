@@ -1,8 +1,5 @@
 {% load thumbnail humanize typogrify_tags %}
 {% block list_item %}
-<li class = "{{ item.column_class }} {{ item.get_importance}}">
-<span class="publication-kind">{{ item.kind }}</span>
-{% include item.template %}
-
-</li>
+    <span class="publication-kind">{{ item.kind }}</span>
+    {% include item.template %}
 {% endblock list_item %}
