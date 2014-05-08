@@ -16,4 +16,10 @@ urlpatterns = patterns('',
         views.PublicationsArchiveView.as_view(),
         name="publications-archive"
         ),
+
+    url(
+        r"^publications-csvdump/(?P<year>\d{4})/$",
+        views.csv_dump,
+        name="publications-csvdump"
+        ),
 )

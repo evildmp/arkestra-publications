@@ -171,6 +171,9 @@ publication_kinds = {
     "conference-proceeding": "Conference paper",
     "report": "Report",
     "other": "Other publication",
+    "internet-publication": "Online resource",
+    "patent": "Patent",
+    "software": "Software",
     }
 
 
@@ -274,15 +277,11 @@ class BibliographicRecord(models.Model):
 
     def __unicode__(self):
         return self.title
-        if self.publication is not None:
-            return self.publication.guid
-        else:
-            return 'Bibliography has No Publication'
 
     # DONT try to override __init__ for a model!
 
     # return info about biblio-record
-    def get_url(self):
+    def get_absolute_url(self):
         try:
             return self.urls.all()[0].link
         except IndexError:
@@ -365,9 +364,8 @@ class BibliographicRecord(models.Model):
             return "includes/other.html"
 
     def kind(self):
-        return publication_kinds.setdefault(
-            self.publication.type, "Other publications"
-            )
+        kind = self.publication.type
+        return kind, publication_kinds.get(kind, "Other publications")
 
     @property
     def get_when(self):

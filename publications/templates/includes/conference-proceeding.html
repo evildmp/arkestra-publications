@@ -1,30 +1,14 @@
-{% spaceless %}
-<cite class = "conference-proceedings">
-	{% if item.get_url %}<a href = "{{ item.get_url }}"><strong>{{ item.title }}</strong></a>
-	{% else %}<strong>{{ item.title }}</strong>
-	{% endif %}
-</cite>
-<br />{{ item.authors }}
-{% ifequal everything.format "short" %}
-	<span class = "publication-details">
-		<cite class = "journal">{{ item.journal|lower|title }}</cite>
-    </span>
-{% else %}
-	<span class = "publication-details">{% if item.location %}, {{ item.location|lower|title }}{% endif %}
-		{% if item.start_date %}({{ item.get_start_date }}){% endif %}
-		
-		<cite class = "journal">{{ item.journal|lower|title }}</cite>{% if item.volume %}, 
-		Volume {{ item.volume }}{% endif %}{% if item.issue %}, 
-		{{ item.issue }}{% endif %}
-    	{% if item.get_publication_date %}({{ item.get_publication_date }}){% endif %}
-    	{% if item.begin_page %}
-			{% if item.end_page %}pp.{{ item.begin_page }}-{{item.end_page}}{% else %}p. {{ item.begin_page }}
-			{% endif %}
+<span class="publication-details">
+	<cite class="journal">{{ item.journal|lower|title }}</cite>{% if item.volume %},
+	Volume {{ item.volume }}{% endif %}{% if item.issue %},
+	{{ item.issue }}{% endif %}{% if item.get_publication_date %}
+	{{ item.get_publication_date }}{% endif %}
+	{% if item.begin_page %}
+		{% if item.end_page %}
+			pp.{{ item.begin_page }}-{{item.end_page}}{% else %}p. {{ item.begin_page }}
 		{% endif %}
-	</span>
-{% endifequal %}
-{% if item.editors %}
-    Edited by {{ item.editors }}
-{% endif %}
-{% endspaceless %}
-
+	{% endif %}
+</span>
+<span class="publication-authors">
+    {{ item.authors }}
+</span>
