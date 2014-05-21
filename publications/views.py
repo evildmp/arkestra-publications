@@ -16,6 +16,7 @@ class PublicationsView(ArkestraGenericView):
             request=self.request,
             favourites_only=True,
             limit_to=10,
+            item_format="details kind"
             )
 
         self.main_page_body_file = "arkestra/generic_lister.html"
@@ -40,7 +41,8 @@ class PublicationsArchiveView(ArkestraGenericView):
             request=self.request,
             favourites_only=False,
             listkinds=[("publications", PublicationsArchiveList)],
-            display="publications"
+            display="publications",
+            item_format="details kind"
             )
 
         self.main_page_body_file = "arkestra/generic_filter_list.html"
@@ -48,3 +50,32 @@ class PublicationsArchiveView(ArkestraGenericView):
         self.title = u"Archive of publications for %s" % unicode(self.entity)
         self.pagetitle = u"Archive of publications for %s" % unicode(self.entity)
         return self.response(request)
+
+
+import unicodecsv
+from django.http import HttpResponse
+from models import BibliographicRecord
+
+def csv_dump(request, year):
+    # Create the HttpResponse object with the appropriate CSV header.
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="publications.csv"'
+
+    attrs = [
+        "authors",
+        "title",
+        "publication_date",
+        "journal",
+        "volume"
+        ]
+
+    pubs = BibliographicRecord.objects.filter(publication_date__contains=year)
+
+    writer = unicodecsv.writer(response)
+
+    writer.writerow([attr for attr in attrs])
+
+    for pub in pubs:
+        writer.writerow([getattr(pub, attr) for attr in attrs])
+
+    return response

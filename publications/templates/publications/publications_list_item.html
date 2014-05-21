@@ -1,8 +1,18 @@
-{% load thumbnail humanize typogrify_tags %}
-{% block list_item %}
-<li class = "{{ item.column_class }} {{ item.get_importance}}">
-<span class="publication-kind">{{ item.kind }}</span>
-{% include item.template %}
+{% load humanize typogrify_tags %}
 
-</li>
+{% block list_item %}
+    {% if "kind" in item.format or "kind" in list.item_format %}
+        <span class="publication-kind">{{ item.kind.1 }}</span>
+    {% endif %}
+
+    <cite class="{{ item.kind.0 }}">
+    	{% if item.get_absolute_url %}
+            <a href="{{ item.get_absolute_url }}" class="title">{{ item }}</a>
+    	{% else %}
+            {{ item }}
+    	{% endif %}
+    </cite>
+
+    {% include item.template %}
+
 {% endblock list_item %}

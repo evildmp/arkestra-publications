@@ -1,17 +1,13 @@
-<cite class = "{{ publication_set.kind }}">
-	{% if item.get_url %}
-		<a href = "{{ item.get_url }}"><strong>{{ item.title }}</strong></a>
-	{% else %}<strong>{{ item.title }}</strong>
-	{% endif %}
-</cite>
-<br />
-{% if item.editors %}
-    Edited by {{ item.editors }}
-{% else %}
-  {{ item.first_author }} et al,
-{% endif %}
-<span class = "publication-details">
+{% if item.edition %}, {{ item.edition }}{% endif %}
+<span class="publication-details">
     {% if item.publisher %}{{ item.publisher }}{% endif %}
-    {% if item.get_publication_date %}({{ item.get_publication_date }}){% endif %}
+    {% if item.get_publication_date %}{{ item.get_publication_date }}{% endif %}
     {% if item.place_of_publication %}{{ item.place_of_publication }}{% endif %}
+</span>
+<span class="publication-authors">
+    {% if item.editors %}
+        Edited by {{ item.editors }}
+    {% else %}
+       {{ item.first_author }} et al,
+    {% endif %}
 </span>

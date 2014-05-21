@@ -11,7 +11,7 @@ from .models import BibliographicRecord, Researcher, Authored
 
 class PublicationsGenericFilterSet(ArkestraGenericFilterSet):
     fields = [
-        # 'authored.is_a_favourite'
+        # 'publication'
         # ('authored__is_a_favourite', {}, ForeignKeyFilter),
         # won't work "publication_date",
         ]
@@ -256,7 +256,6 @@ class PublicationsLister(ArkestraGenericLister):
         ("publications", PublicationsListLatest),
         ]
     display = "publications"
-
 
 
 class PublicationsMenuList(PublicationsList):
