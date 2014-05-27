@@ -18,19 +18,20 @@ def get_selected_person_publications(context, researcher = None):
     Lists Researcher's selected articles
     """
     researcher = researcher or context.get('person').researcher
-    # invoke the lister to find out more
-    lister = PublicationsLister(
-        listkinds=[
-            ("publications", PublicationsListForPerson),
-                ],
-        researcher=researcher,
-        heading_text="Recent key publications",
-        limit_to=6,
-        favourites_only=True,
-        request=context["request"],
-        )
-    context.update({"lister": lister})
-    return context
+    if researcher and researcher.authored.exists():
+        # invoke the lister to find out more
+        lister = PublicationsLister(
+            listkinds=[
+                ("publications", PublicationsListForPerson),
+                    ],
+            researcher=researcher,
+            heading_text="Recent key publications",
+            limit_to=6,
+            favourites_only=True,
+            request=context["request"],
+            )
+        context.update({"lister": lister})
+        return context
 
 
 @register.inclusion_tag(
