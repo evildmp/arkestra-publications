@@ -1,13 +1,7 @@
 <span class="publication-details">
-	<cite class="journal">{{ item.journal|lower|title }}</cite>{% if item.volume %},
-	Volume {{ item.volume }}{% endif %}{% if item.issue %},
-	{{ item.issue }}{% endif %}{% if item.get_publication_date %}
-	{{ item.get_publication_date }}{% endif %}
-	{% if item.begin_page %}
-		{% if item.end_page %}
-			pp.{{ item.begin_page }}-{{item.end_page}}{% else %}p. {{ item.begin_page }}
-		{% endif %}
-	{% endif %}
+	<span class="conference">{{ item.name_of_conference }}</span>{% if item.location %},
+    {{ item.location }}{% endif %}{% if item.get_start_date %},
+	{{ item.get_start_date }}{% endif %}
 </span>
 <span class="publication-authors">
     {{ item.authors }}
