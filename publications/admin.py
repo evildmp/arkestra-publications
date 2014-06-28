@@ -107,6 +107,7 @@ class ResearcherAdmin(AutocompleteMixin, ModelAdminWithTabsAndCMSPlaceholder):
 
 
 admin.site.register(models.Researcher, ResearcherAdmin)
+admin.site.register(models.Student)
 
 
 class ResearcherInlineForm(forms.ModelForm):
@@ -149,6 +150,7 @@ class ResearcherInline(admin.StackedInline):
         super(ResearcherInline, self).__init__(attrs, *args, **kwargs)
 
     def get_formset(self, request, obj=None, **kwargs):
+
         # first test to see if the Person is also a Researcher
         try:
             researcher = obj.researcher
@@ -166,9 +168,11 @@ class ResearcherInline(admin.StackedInline):
             # around? delete it
             elif 'buttonlink' in self.fields and not obj.researcher.publishes:
                 self.fields.remove("buttonlink")
-        return super(ResearcherInline, self).get_formset(
+        formset = super(ResearcherInline, self).get_formset(
             request, obj=None, **kwargs
             )
+
+        return formset
 
     fields = ['publishes']
     form = ResearcherInlineForm

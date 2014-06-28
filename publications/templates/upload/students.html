@@ -1,0 +1,218 @@
+{% extends base_template %}
+{% load static %}
+
+{% block scripts %}{{ block.super }}
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.js" type="text/javascript"></script>
+
+{% include 'autocomplete_light/static.html' %}
+<link href="/static/publications/upload.css" type="text/css" media="all" rel="stylesheet">
+<script type="text/javascript">
+var django = {
+    "jQuery": jQuery
+};
+</script>
+<script type="text/javascript" src="{% static 'admin/js/inlines.js' %}"></script>
+{% endblock scripts %}
+
+{% block menu %}{% endblock menu %}
+{% block nav_local %}{% endblock nav_local %}
+
+{% block main_page_body %}
+<h{{PAGE_TITLE_HEADING_LEVEL}}>Upload students</h{{PAGE_TITLE_HEADING_LEVEL}}>
+
+<form action="{% url upload %}" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ upload_form }}
+    <p><input type="submit" value="Upload" name="upload"/></p>
+</form>
+
+<form method="post" action="{% url upload %}">
+    {% csrf_token %}
+    {{ student_formset.management_form }}
+    {{ student_formset.non_form_errors }}
+    <p><input type="submit" value="Reprocess students" name="reprocess"></p>
+    <ul>
+        {% for form, supervisor_formset in zipped_formsets %}
+            <li class="no-marker {{ form.status }} {{ form.all_status }} student">
+                <fieldset class="">
+                    {{ form.non_field_errors }}
+
+                    <div class="form-row field-person">
+                        <div>
+                            <span class="inline label">Select person:</span>
+                            {{ form.person }}
+                            {{ form.person.errors }}
+                            {% if form.initial.matches != None %}({{ form.initial.matches }}){% endif %}
+                            {% if form.person.value %}
+                            <p class="help">
+                                <a  href="{% url admin:contacts_and_people_person_change form.person.value %}"
+                                target="_blank">Edit this Person in Arkestra</a>
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="field-box">
+                            <span class="inline label">Create person:</span>
+                            {{ form.given_name }}
+                            {{ form.given_name.errors }}
+                        </div>
+                        <div class="field-box">
+                            {{ form.surname }}
+                            {{ form.surname.errors }}
+                        </div>
+                        <div class="field-box">
+                            {{ form.slug }}
+                            {{ form.slug.errors }}
+                        </div>
+                        {% if form.requires_confirmation %}
+                            <div>
+                                <label for="id_create">{{ form.create.label }}:</label>
+                                {{ form.create }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="form-row">
+                        <div class="field-box">
+                            {{ form.programme }}
+                            {{ form.programme.errors }}
+                        </div>
+                        <div class="field-box">
+                            {{ form.entity }}
+                            {{ form.entity.errors }}
+                            {% if form.check_memberships %}
+                                <br><strong>Warning:</strong> already a member of this Entity
+                                <ul>
+                                {% for em in form.check_memberships %}
+                                    <li>{{ em }}</li>
+                                {% endfor %}
+                            </ul>
+                            <a  href="{% url admin:contacts_and_people_person_change form.person.value %}#tab_entities"
+                                target="_blank">
+                                Please check whether this Person has already been listed as a student
+                            </a>
+
+                            {% endif %}
+                        </div>
+                        <div class="field-box">
+                            {{ form.student_id }}
+                            {{ form.student_id.errors }}
+                        </div>
+                    </div>
+
+                    <div class="form-row thesis">
+                        <div>
+                            {{ form.thesis }}
+                            {{ form.thesis.errors }}
+                        </div>
+                    </div>
+
+                    <div class="field-person">
+                        <div>
+                            <ul class="supervisors">
+                                {{ supervisor_formset.management_form }}
+                                {{ supervisor_formset.non_form_errors }}
+                                {% for supervisor in supervisor_formset %}
+                                    <li class="{{ supervisor_formset.prefix }}-inline {{ supervisor.status }}">
+                                        <div class="form-row field-person aligned">
+                                            <div>
+                                                {{ supervisor.non_field_errors }}
+                                                <span class="inline label">Select supervisor:</span>
+                                                {{ supervisor.person }}
+
+                                                {{ supervisor.person.errors }}
+                                                {% if supervisor.initial.matches != None %}({{ supervisor.initial.matches }}){% endif %}
+                                                {% if supervisor.person.value %}
+                                                <p class="help">
+                                                    <a  href="{% url admin:contacts_and_people_person_change supervisor.person.value %}"
+                                                    target="_blank">Edit this Person in Arkestra</a>
+                                                </p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <div class="field-box">
+                                                <span class="inline label">Create supervisor:</span>
+                                                {{ supervisor.given_name }}
+                                                {{ supervisor.given_name.errors }}
+                                            </div>
+                                            <div class="field-box">
+                                                {{ supervisor.surname }}
+                                                {{ supervisor.surname.errors }}
+                                            </div>
+                                            <div class="field-box">
+                                                {{ supervisor.slug }}
+                                                {{ supervisor.slug.errors }}
+                                            </div>
+                                            <div class="field-box">
+                                                {{ supervisor.entity }}
+                                                {{ supervisor.entity.errors }}
+                                            </div>
+                                            {% if supervisor.requires_confirmation %}
+                                                <div>
+                                                    <label>{{ supervisor.create.label }}:</label>
+                                                    {{ supervisor.create }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+
+                                    </li>
+                                {% endfor %}
+
+                                {# empty and hidden inline #}
+                                {% with supervisor_formset.empty_form as supervisor %}
+                                    <li class="{{ supervisor_formset.prefix }}-inline empty-form" id="{{ supervisor_formset.prefix }}-empty">
+                                        {{ supervisor.supervisor }}
+                                        {% if supervisor.initial.given_name or supervisor.initial.surname %}<br>
+                                            {{ supervisor.initial.matches }} uploaded as:
+                                            {{ supervisor.initial.title }}
+                                            {{ supervisor.initial.given_name }}
+                                            {{ supervisor.initial.surname }}
+                                        {% endif %}
+                                        <p class="help">{{ supervisor.supervisor.help_text }}</p>
+                                        <a class="remove_child">remove</a>
+                                        {{ supervisor.title }}
+                                        {{ supervisor.surname }}
+                                        {{ supervisor.given_name }}
+                                        {{ supervisor.position }}
+                                    </li>
+                                {% endwith %}
+
+                                <script type="text/javascript">
+                                  (function() {
+                                      $('.{{ supervisor_formset.prefix }}-inline').formset({
+                                      prefix: '{{ supervisor_formset.prefix }}',
+                                      //addText: 'Add',
+                                      //addCssClass: 'add_child',
+                                      addButtonId: 'new_line',
+                                      deleteText: '',
+                                      deleteCssClass: 'remove_child',
+                                      emptyCssClass: 'empty-form'
+                                    });
+                                  })(django.jQuery);
+                                </script>
+
+                            </ul>
+                        </div>
+                    </div>
+                    {% if form.is_ready_to_save %}
+                        <div class="form-row">
+                            <div>
+                                <label for="id_confirm">{{ form.confirm.label }}:</label>
+                                {{ form.confirm }}
+                                <p class="help">{{ form.confirm.help_text }}</p>
+                        </div>
+                    {% endif %}
+                </fieldset>
+
+            </li>
+        {% endfor %}
+    </ul>
+    <p><input type="submit" value="Reprocess students" name="reprocess"></p>
+</form>
+
+
+
+{% endblock main_page_body %}

@@ -4,9 +4,8 @@ from datetime import datetime
 from django.db import models
 from django.template import TemplateDoesNotExist
 from django.template.defaultfilters import date
-from django.core.cache import cache
 
-from contacts_and_people.models import Entity
+from contacts_and_people.models import Entity, Person
 
 from cms.models.pluginmodel import CMSPlugin
 # CMSPlugin = models.get_model('cms', 'CMSPlugin')
@@ -22,16 +21,9 @@ from arkestra_utilities.settings import (
 class Researcher(models.Model):
     #one-to-one link to contacts_and_people.Person
     person = models.OneToOneField(
-        'contacts_and_people.Person',
-        primary_key=True, related_name="researcher",
-        help_text=
-        """
-        Do not under any circumstances change this field. No, really. Don't
-        touch this.
-        """
+        Person,
+        primary_key=True
         )
-    # research_synopsis = models.TextField(null=True, blank=True)
-    # research_description = models.TextField(blank=True, null=True)
 
     synopsis = PlaceholderField(
         'body',
@@ -76,9 +68,6 @@ class Researcher(models.Model):
         null=True, verbose_name="Symplectic User ID"
         )
 
-    #research_brief_summary = models.TextField(null = True)
-    #research_overview = models.TextField(null = True)
-
     def __unicode__(self):
         return self.person.__unicode__()
 
@@ -101,16 +90,41 @@ class Researcher(models.Model):
     def remove_all_authored(self):
         self.authored.all().delete()
 
-    # @cached_property
-    # def publications(self):
-    #     # invoke the lister to find out more
-    #     lister = PersonPublicationsLister(
-    #         researcher=self,
-    #         order_by="date",
-    #         )
-    #     return lister
 
-# Python Object of Symplectic Publication
+class Academic(models.Model):
+    researcher = models.OneToOneField(
+        Researcher,
+        primary_key=True,
+        help_text=
+        """
+        Do not under any circumstances change this field. No, really. Don't
+        touch this.
+        """
+        )
+
+
+class Student(models.Model):
+    researcher = models.OneToOneField(
+        Researcher,
+        primary_key=True,
+        help_text=
+        """
+        Do not under any circumstances change this field. No, really. Don't
+        touch this.
+        """
+        )
+    thesis = models.CharField(max_length=512)
+    programme = models.CharField(max_length=20)
+    supervisors = models.ManyToManyField(
+        Academic,
+        through="Supervision"
+        )
+    student_id = models.PositiveIntegerField(unique=True)
+
+
+class Supervision(models.Model):
+    student = models.ForeignKey(Student)
+    supervisor = models.ForeignKey(Academic)
 
 
 class Publication(models.Model):
@@ -390,11 +404,9 @@ class BibliographicRecord(models.Model):
         links to the publication and datasource passed in
         """
         try:
-            # print "        looking for pubication", publication, "data source", data_source
             biblio = BibliographicRecord.objects.get(
                 publication=publication, data_source=data_source
                 )
-            # print "        got", biblio.id
             return biblio
         except BibliographicRecord.DoesNotExist:
             # print "        didn't get it"
@@ -426,7 +438,7 @@ class Authored(models.Model):
     # id = models.CharField(primary_key=True, max_length=255)
 
     #link a single Researcher
-    researcher = models.ForeignKey('Researcher',related_name='authored')
+    researcher = models.ForeignKey('Researcher', related_name='authored')
 
     #link a single SymplecticPublication
     publication = models.ForeignKey('Publication', related_name='authored')
@@ -465,7 +477,6 @@ class Authored(models.Model):
                 # print "        creating a new Authored"
                 pass
             super(self.__class__, self).save()
-
 
     def __unicode__(self):
         # return str(self.researcher) + ':' + str(self.publication)
