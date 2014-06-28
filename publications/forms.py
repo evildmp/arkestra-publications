@@ -186,11 +186,14 @@ class PersonFormMixin(forms.Form):
 
         else:
             slug = slug or slugify(name)
+            print "slug",  slug
 
-            if Person.objects.filter(slug=slug):
-                raise forms.ValidationError(
-                    "Slug clash! '%s' exists already." % slug
-                    )
+            index = 1
+            while Person.objects.filter(slug=slug):
+                slug_base = slug
+                slug = slug_base + str(index)
+                index += 1
+
         return slug
 
     def clean_entity(self):
@@ -278,8 +281,10 @@ class StudentForm(PersonFormMixin, forms.Form):
         )
 
     def all_status(self):
-        items = [s for s in self.supervisor_formset] + [self]
 
+        if self.already_exists():
+            return "already-exists"
+        items = [s for s in self.supervisor_formset] + [self]
         if not all([s.is_valid() for s in items]):
             return "all-invalid"
         elif self.is_ready_to_save():
@@ -287,24 +292,23 @@ class StudentForm(PersonFormMixin, forms.Form):
         elif any([s.requires_confirmation() for s in items]):
             return "all-requires-confirmation"
 
-    def clean_person(self):
-        person = self.cleaned_data.get("person")
-        try:
-            if Student.objects.get(researcher=person):
-                raise forms.ValidationError("Already exists; can't save.")
-        except Student.DoesNotExist:
-            return person
-
     def check_memberships(self):
-        if getattr(self, "cleaned_data", False):
+        if self.is_valid() and not self.already_exists():
             person = self.cleaned_data.get("person")
             entity = self.cleaned_data.get("entity")
             if person:
                 return person.member_of.filter(entity=entity)
 
+    def already_exists(self):
+        if self.is_valid():
+            student_id = self.cleaned_data.get("student_id")
+            if Student.objects.filter(student_id=student_id):
+                return True
+
+
     def is_ready_to_save(self):
 
-        if self.is_valid() and self.cleaned_data and self.supervisor_formset.is_valid():
+        if self.is_valid() and self.cleaned_data and self.supervisor_formset.is_valid() and not self.already_exists():
             items = [self] + [s for s in self.supervisor_formset]
             return all([s.is_ready() for s in items if s.cleaned_data])
 

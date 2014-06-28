@@ -63,7 +63,7 @@ from django.contrib.auth.decorators import login_required
 import django.shortcuts as shortcuts
 from django.template import RequestContext
 import unicodecsv
-from contacts_and_people.models import Person, Entity
+from contacts_and_people.models import Person, Entity, Membership
 from models import Researcher, Student, Supervision, Academic
 
 from django.template.defaultfilters import slugify
@@ -211,7 +211,7 @@ def upload(request):
                     m = Membership(
                         person=person,
                         entity=entity,
-                        role="%s student" % programme,
+                        role="%s student" % cleaned_data["programme"],
                         importance_to_person=5
                     )
                     m.save()
@@ -243,7 +243,6 @@ def upload(request):
                                 m = Membership(
                                     person=person,
                                     entity=entity,
-                                    role="%s student" % programme,
                                     importance_to_person=5
                                 )
                                 m.save()
@@ -259,7 +258,7 @@ def upload(request):
                                 )
 
                             # get or create a Supervision relationship for each
-                            supervision = Supervision.objects.get_or_create(
+                            supervision, created = Supervision.objects.get_or_create(
                                 supervisor=academic,
                                 student=stud
                                 )
