@@ -78,7 +78,7 @@ def can_upload_students(user):
 
 
 @user_passes_test(can_upload_students)
-def upload(request):
+def upload_students(request):
 
     # empty defaults
     uploaded_document = None
@@ -240,15 +240,16 @@ def upload(request):
                             supervisor = s.cleaned_data["person"]
 
                             if not supervisor:
-                                given_name = s.cleaned_data["given_name"]
-                                surname = s.cleaned_data["surname"]
-                                slug = s.cleaned_data["slug"]
+                                s_given_name = s.cleaned_data["given_name"]
+                                s_surname = s.cleaned_data["surname"]
+                                s_slug = s.cleaned_data["slug"]
+                                s_entity = s.cleaned_data["entity"]
 
                                 supervisor = Person(
-                                    given_name=given_name,
-                                    surname=surname,
+                                    given_name=s_given_name,
+                                    surname=s_surname,
                                     active=True,
-                                    slug=slug
+                                    slug=s_slug
                                 )
                                 supervisor.save()
                                 s.cleaned_data["person"] = supervisor
@@ -256,7 +257,7 @@ def upload(request):
 
                                 m = Membership(
                                     person=supervisor,
-                                    entity=entity,
+                                    entity=s_entity,
                                     importance_to_person=5
                                 )
                                 m.save()

@@ -1206,7 +1206,7 @@ li.all-ready fieldset {border: 2px solid green;}
 li.all-requires-confirmation fieldset {border: 2px solid #ffe373;}
 li.all-invalid fieldset {border: 2px solid red;}
 
-li.all-already-exists fieldset li div.field-box {background: #67c4e3;}
+li.all-already-exists fieldset li {background: #67c4e3;}
 li.ready {background: #d0f3cd;}
 li.requires-confirmation {background: #fbf2d4;}
 li.blank {background: white;}

@@ -20,13 +20,13 @@ var django = {
 {% block main_page_body %}
 <h{{PAGE_TITLE_HEADING_LEVEL}}>Upload students</h{{PAGE_TITLE_HEADING_LEVEL}}>
 
-<form action="{% url upload %}" method="post" enctype="multipart/form-data">
+<form action="{% url upload-students %}" method="post" enctype="multipart/form-data">
     {% csrf_token %}
     {{ upload_form }}
     <p><input type="submit" value="Upload" name="upload"/></p>
 </form>
 
-<form method="post" action="{% url upload %}">
+<form method="post" action="{% url upload-students %}">
     {% csrf_token %}
     {{ student_formset.management_form }}
     {{ student_formset.non_form_errors }}
@@ -137,7 +137,6 @@ var django = {
                                                 {{ supervisor.person }}
 
                                                 {{ supervisor.person.errors }}
-                                                {% if supervisor.initial.matches != None %}({{ supervisor.initial.matches }}){% endif %}
                                                 {% if supervisor.person.value %}
                                                 <p class="help">
                                                     <a  href="{% url admin:contacts_and_people_person_change supervisor.person.value %}"
@@ -183,19 +182,34 @@ var django = {
                                 {# empty and hidden inline #}
                                 {% with supervisor_formset.empty_form as supervisor %}
                                     <li class="{{ supervisor_formset.prefix }}-inline empty-form" id="{{ supervisor_formset.prefix }}-empty">
-                                        {{ supervisor.supervisor }}
-                                        {% if supervisor.initial.given_name or supervisor.initial.surname %}<br>
-                                            {{ supervisor.initial.matches }} uploaded as:
-                                            {{ supervisor.initial.title }}
-                                            {{ supervisor.initial.given_name }}
-                                            {{ supervisor.initial.surname }}
-                                        {% endif %}
-                                        <p class="help">{{ supervisor.supervisor.help_text }}</p>
+                                        <div class="form-row field-person aligned">
+                                            <div>
+                                                <span class="inline label">Select supervisor:</span>
+                                                {{ supervisor.person }}
+                                            </div>
+                                        </div>
+
                                         <a class="remove_child">remove</a>
-                                        {{ supervisor.title }}
-                                        {{ supervisor.surname }}
-                                        {{ supervisor.given_name }}
-                                        {{ supervisor.position }}
+                                        <div class="form-row">
+                                            <div class="field-box">
+                                                <span class="inline label">Create supervisor:</span>
+                                                {{ supervisor.given_name }}
+                                                {{ supervisor.given_name.errors }}
+                                            </div>
+                                            <div class="field-box">
+                                                {{ supervisor.surname }}
+                                                {{ supervisor.surname.errors }}
+                                            </div>
+                                            <div class="field-box">
+                                                {{ supervisor.slug }}
+                                                {{ supervisor.slug.errors }}
+                                            </div>
+                                            <div class="field-box">
+                                                {{ supervisor.entity }}
+                                                {{ supervisor.entity.errors }}
+                                            </div>
+                                        </div>
+
                                     </li>
                                 {% endwith %}
 
