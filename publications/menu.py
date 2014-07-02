@@ -33,9 +33,8 @@ class PublicationsPersonTabs(PersonTabs):
 
         try:
             student = r.student
-            print student
         except ObjectDoesNotExist:
-            return
+            student = None
 
         tab_dict = {
             "tab": "research",
@@ -44,9 +43,11 @@ class PublicationsPersonTabs(PersonTabs):
             "meta_description_content":
                 "%s - research interests" % unicode(person)
         }
-        if student or (p and s and d and (
-            s.cmsplugin_set.all() or d.cmsplugin_set.all()
-            )):
+        if student or (p and (
+            (s and s.cmsplugin_set.all()) or
+            (d and d.cmsplugin_set.all())
+            )
+        ):
             return tab_dict
 
     def publications(self, person):
@@ -79,5 +80,4 @@ class PublicationsPersonTabs(PersonTabs):
             if supervisor.student_set.exists():
                 return tab_dict
         except ObjectDoesNotExist:
-            print "supervisor not found"
             pass
