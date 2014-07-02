@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls.defaults import patterns, url, include
 
 from publications import views
 
@@ -22,4 +22,9 @@ urlpatterns = patterns('',
         views.csv_dump,
         name="publications-csvdump"
         ),
+
+    url(
+        r"^upload-students/$", views.upload_students, name="upload-students"),
+
+    url(r'^publications-autocomplete/', include('autocomplete_light.urls')),
 )

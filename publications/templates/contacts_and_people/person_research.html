@@ -16,6 +16,26 @@
 {% endblock page_title %}
 
 {% block person_information %}
+    {% if person.researcher.student %}
+        <div>
+            <dl>
+                <dt>Research programme</dt>
+                <dd>{{ person.researcher.student.programme }}</dd>
+                <dt>Start date</dt>
+                <dd>{{ person.researcher.student.start_date|date:"Y" }}</dd>
+                <dt>Thesis</dt>
+                <dd><cite>{{ person.researcher.student.thesis }}</cite></dd>
+            </dl>
+            {% if person.researcher.student.supervisors.all %}
+            <h3>Supervisors</h3>
+            <ul>{% for supervisor in person.researcher.student.supervisors.all %}
+                <li><a href="{{ supervisor.get_absolute_url }} ">{{ supervisor }}</a></li>
+            {% endfor %}</ul>
+            {% endif %}
+        </div>
+	{% endif %}
+
+
   {% if person.researcher.synopsis or person.researcher.description %}
     <div>
         {% if person.researcher.synopsis.cmsplugin_set.all %}

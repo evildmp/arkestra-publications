@@ -1,0 +1,1 @@
+-e git+https://github.com/evildmp/django-autocomplete-light.git@v2#egg=django-autocomplete-light-evildmp

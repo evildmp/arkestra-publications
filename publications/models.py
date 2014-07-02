@@ -1,12 +1,14 @@
+# new supervisors - contact information
+
+
 #app = publications
 from datetime import datetime
 
 from django.db import models
 from django.template import TemplateDoesNotExist
 from django.template.defaultfilters import date
-from django.core.cache import cache
 
-from contacts_and_people.models import Entity
+from contacts_and_people.models import Entity, Person
 
 from cms.models.pluginmodel import CMSPlugin
 # CMSPlugin = models.get_model('cms', 'CMSPlugin')
@@ -22,16 +24,9 @@ from arkestra_utilities.settings import (
 class Researcher(models.Model):
     #one-to-one link to contacts_and_people.Person
     person = models.OneToOneField(
-        'contacts_and_people.Person',
-        primary_key=True, related_name="researcher",
-        help_text=
-        """
-        Do not under any circumstances change this field. No, really. Don't
-        touch this.
-        """
+        Person,
+        primary_key=True
         )
-    # research_synopsis = models.TextField(null=True, blank=True)
-    # research_description = models.TextField(blank=True, null=True)
 
     synopsis = PlaceholderField(
         'body',
@@ -76,11 +71,11 @@ class Researcher(models.Model):
         null=True, verbose_name="Symplectic User ID"
         )
 
-    #research_brief_summary = models.TextField(null = True)
-    #research_overview = models.TextField(null = True)
-
     def __unicode__(self):
         return self.person.__unicode__()
+
+    def get_absolute_url(self):
+        return self.person.get_absolute_url()
 
     #return a list of authored for this researcher
     def get_authoreds(self):
@@ -101,16 +96,64 @@ class Researcher(models.Model):
     def remove_all_authored(self):
         self.authored.all().delete()
 
-    # @cached_property
-    # def publications(self):
-    #     # invoke the lister to find out more
-    #     lister = PersonPublicationsLister(
-    #         researcher=self,
-    #         order_by="date",
-    #         )
-    #     return lister
 
-# Python Object of Symplectic Publication
+class Supervisor(models.Model):
+    #
+    researcher = models.OneToOneField(
+        Researcher,
+        primary_key=True,
+        help_text=
+        """
+        Do not under any circumstances change this field. No, really. Don't
+        touch this.
+        """
+        )
+
+    def __unicode__(self):
+        return self.researcher.__unicode__()
+
+    def get_absolute_url(self):
+        return self.researcher.get_absolute_url()
+
+    def current_students(self):
+        return self.student_set.filter(completed=False)
+
+    def previous_students(self):
+        return self.student_set.filter(completed=True)
+
+
+class Student(models.Model):
+    researcher = models.OneToOneField(
+        Researcher,
+        primary_key=True,
+        help_text=
+        """
+        Do not under any circumstances change this field. No, really. Don't
+        touch this.
+        """
+        )
+    thesis = models.CharField(max_length=512)
+    programme = models.CharField(max_length=20)
+    supervisors = models.ManyToManyField(
+        Supervisor,
+        through="Supervision"
+        )
+    student_id = models.CharField(unique=True, max_length=8)
+    completed = models.BooleanField(
+        help_text="Student has completed their studies"
+        )
+    start_date = models.DateField()
+
+    def __unicode__(self):
+        return self.researcher.__unicode__()
+
+    def get_absolute_url(self):
+        return self.researcher.get_absolute_url()
+
+
+class Supervision(models.Model):
+    student = models.ForeignKey(Student)
+    supervisor = models.ForeignKey(Supervisor)
 
 
 class Publication(models.Model):
@@ -390,11 +433,9 @@ class BibliographicRecord(models.Model):
         links to the publication and datasource passed in
         """
         try:
-            # print "        looking for pubication", publication, "data source", data_source
             biblio = BibliographicRecord.objects.get(
                 publication=publication, data_source=data_source
                 )
-            # print "        got", biblio.id
             return biblio
         except BibliographicRecord.DoesNotExist:
             # print "        didn't get it"
@@ -426,7 +467,7 @@ class Authored(models.Model):
     # id = models.CharField(primary_key=True, max_length=255)
 
     #link a single Researcher
-    researcher = models.ForeignKey('Researcher',related_name='authored')
+    researcher = models.ForeignKey('Researcher', related_name='authored')
 
     #link a single SymplecticPublication
     publication = models.ForeignKey('Publication', related_name='authored')
@@ -465,7 +506,6 @@ class Authored(models.Model):
                 # print "        creating a new Authored"
                 pass
             super(self.__class__, self).save()
-
 
     def __unicode__(self):
         # return str(self.researcher) + ':' + str(self.publication)
