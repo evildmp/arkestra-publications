@@ -87,12 +87,12 @@ You can always check your data by pressing `Reprocess students`.
 The colours of each student's form and its sections change to indicate their
 status:
 
-* white: blank; will be ignored
-* red: incomplete or invalid
-* yellow: complete, but contains a student or supervisor that needs to be
+* `white`: blank; will be ignored
+* `red`: incomplete or invalid
+* `yellow`: complete, but contains a student or supervisor that needs to be
   created
-* green: ready to be saved to the database
-* blue: successfully processed
+* `green`: ready to be saved to the database
+* `blue`: successfully processed
 
 You will typically need to reprocess the form several times to move through all
 these states; one way of looking at the task is to see it as making all the
