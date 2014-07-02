@@ -26,5 +26,5 @@ urlpatterns = patterns('',
     url(
         r"^upload/$", views.upload, name="upload"),
 
-    url(r'^autocomplete/', include('autocomplete_light.urls')),
+    url(r'^publications-autocomplete/', include('autocomplete_light.urls')),
 )

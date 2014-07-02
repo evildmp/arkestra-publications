@@ -1,3 +1,6 @@
+# new supervisors - contact information
+
+
 #app = publications
 from datetime import datetime
 
@@ -71,6 +74,9 @@ class Researcher(models.Model):
     def __unicode__(self):
         return self.person.__unicode__()
 
+    def get_absolute_url(self):
+        return self.person.get_absolute_url()
+
     #return a list of authored for this researcher
     def get_authoreds(self):
         return self.authored.filter(visible=True).order_by(
@@ -91,7 +97,8 @@ class Researcher(models.Model):
         self.authored.all().delete()
 
 
-class Academic(models.Model):
+class Supervisor(models.Model):
+    #
     researcher = models.OneToOneField(
         Researcher,
         primary_key=True,
@@ -101,6 +108,18 @@ class Academic(models.Model):
         touch this.
         """
         )
+
+    def __unicode__(self):
+        return self.researcher.__unicode__()
+
+    def get_absolute_url(self):
+        return self.researcher.get_absolute_url()
+
+    def current_students(self):
+        return self.student_set.filter(completed=False)
+
+    def previous_students(self):
+        return self.student_set.filter(completed=True)
 
 
 class Student(models.Model):
@@ -116,15 +135,25 @@ class Student(models.Model):
     thesis = models.CharField(max_length=512)
     programme = models.CharField(max_length=20)
     supervisors = models.ManyToManyField(
-        Academic,
+        Supervisor,
         through="Supervision"
         )
-    student_id = models.PositiveIntegerField(unique=True)
+    student_id = models.CharField(unique=True, max_length=8)
+    completed = models.BooleanField(
+        help_text="Student has completed their studies"
+        )
+    start_date = models.DateField()
+
+    def __unicode__(self):
+        return self.researcher.__unicode__()
+
+    def get_absolute_url(self):
+        return self.researcher.get_absolute_url()
 
 
 class Supervision(models.Model):
     student = models.ForeignKey(Student)
-    supervisor = models.ForeignKey(Academic)
+    supervisor = models.ForeignKey(Supervisor)
 
 
 class Publication(models.Model):

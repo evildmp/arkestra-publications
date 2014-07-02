@@ -1,13 +1,19 @@
-from operator import itemgetter
+import unicodecsv
 
+from django.conf import settings
+import django.shortcuts as shortcuts
+from django.template import RequestContext
+
+from contacts_and_people.models import Person, Membership
 from arkestra_utilities.views import ArkestraGenericView
 from arkestra_utilities.generic_lister import ArkestraGenericLister
 from arkestra_utilities.settings import MULTIPLE_ENTITY_MODE
 
+from models import Researcher, Student, Supervision, Supervisor
 from lister import PublicationsLister, PublicationsArchiveList
-
 from forms import (
-    StudentFormset, SupervisorFormset, DocumentForm, csv_to_list, convert_to_formset, process_formset, StudentForm
+    StudentFormset, SupervisorFormset, DocumentForm, csv_to_list,
+    convert_to_formset, process_formset
     )
 
 
@@ -54,26 +60,24 @@ class PublicationsArchiveView(ArkestraGenericView):
         self.main_page_body_file = "arkestra/generic_filter_list.html"
         self.meta = {"description": "Searchable archive of publications items"}
         self.title = u"Archive of publications for %s" % unicode(self.entity)
-        self.pagetitle = u"Archive of publications for %s" % unicode(self.entity)
+        self.pagetitle = u"Archive of publications for %s" % unicode(
+            self.entity
+            )
         return self.response(request)
 
 
-from django.conf import settings
-from django.contrib.auth.decorators import login_required
-import django.shortcuts as shortcuts
-from django.template import RequestContext
-import unicodecsv
-from contacts_and_people.models import Person, Entity, Membership
-from models import Researcher, Student, Supervision, Academic
-
-from django.template.defaultfilters import slugify
+from django.contrib.auth.models import Group
 
 
+from django.contrib.auth.decorators import user_passes_test
 
 
-import re
+def can_upload_students(user):
+    upload_group, c = Group.objects.get_or_create(name="Can upload students")
+    return upload_group in user.groups.all()
 
-@login_required
+
+@user_passes_test(can_upload_students)
 def upload(request):
 
     # empty defaults
@@ -119,7 +123,6 @@ def upload(request):
                 prefix="student"
                 )
 
-
             # there will be a supervisor_formset for each student
             supervisor_formsets = []
 
@@ -134,7 +137,7 @@ def upload(request):
                 # correct supervisors can be matched to the student
                 supervisor_formset = SupervisorFormset(
                     request.POST, request.FILES,
-                    prefix="%s-supervisor" %student.prefix
+                    prefix="%s-supervisor" % student.prefix
                     )
 
                 # make the supervisor_formset available on the student form for
@@ -150,12 +153,14 @@ def upload(request):
                     supervisor.is_valid()
 
                     for k, v in supervisor.cleaned_data.items():
-                        supervisor_formset.data[supervisor.prefix + "-" + k] = v
+                        supervisor_formset.data[
+                            supervisor.prefix + "-" + k
+                        ] = v
 
                 # rebind the data to the formset
                 supervisor_formset = SupervisorFormset(
                     supervisor_formset.data,
-                    prefix="%s-supervisor" %student.prefix
+                    prefix="%s-supervisor" % student.prefix
                 )
 
                 # add this supervisor_formset to the list of formsets
@@ -180,28 +185,36 @@ def upload(request):
                         given_name = cleaned_data["given_name"]
                         surname = cleaned_data["surname"]
                         slug = cleaned_data["slug"]
+                        email = cleaned_data["email"]
+                        institutional_username = cleaned_data["username"]
 
                         person = Person(
                             given_name=given_name,
                             surname=surname,
+                            slug=slug,
+                            email=email,
+                            institutional_username=institutional_username,
+
                             active=True,
-                            slug=slug
+
                         )
                         person.save()
                         cleaned_data["person"] = person
 
                     # get or create a Researcher for the Person
                     researcher, created = Researcher.objects.get_or_create(
-                        person=person
+                        person=person,
+                        defaults={'publishes': True}
                         )
 
                     # get or create a Student for the Researcher
                     stud, created = Student.objects.get_or_create(
                         researcher=researcher,
-                        defaults = {
+                        defaults={
                             "student_id": cleaned_data["student_id"],
                             "thesis": cleaned_data["thesis"],
                             "programme": cleaned_data["programme"],
+                            "start_date": cleaned_data["start_date"],
                         }
                     )
 
@@ -216,13 +229,13 @@ def upload(request):
                     )
                     m.save()
 
-                    # only if the Student was created, we'll add the supervisors
+                    # if the Student was created, we'll add the supervisors
                     if created:
 
                         # loop over the supervisor forms that have data
                         for s in [
                             s for s in supervisor_formset if s.cleaned_data
-                            ]:
+                        ]:
 
                             supervisor = s.cleaned_data["person"]
 
@@ -240,50 +253,43 @@ def upload(request):
                                 supervisor.save()
                                 s.cleaned_data["person"] = supervisor
                                 # create the Supervisor's Membership
+
                                 m = Membership(
-                                    person=person,
+                                    person=supervisor,
                                     entity=entity,
                                     importance_to_person=5
                                 )
                                 m.save()
 
                             # get or create a Researcher for the Person
-                            researcher, created = Researcher.objects.get_or_create(
-                            person=supervisor
+                            researcher, c = Researcher.objects.get_or_create(
+                                person=supervisor
                             )
 
-                            # get or create an Academic for each Researcher
-                            academic, created = Academic.objects.get_or_create(
+                            # get or create an Supervisor for each Researcher
+                            supervisor, c = Supervisor.objects.get_or_create(
                                 researcher=researcher,
                                 )
 
                             # get or create a Supervision relationship for each
-                            supervision, created = Supervision.objects.get_or_create(
-                                supervisor=academic,
+                            supervision, c = Supervision.objects.get_or_create(
+                                supervisor=supervisor,
                                 student=stud
                                 )
 
                 for k, v in student.cleaned_data.items():
                     student_formset.data[student.prefix + "-" + k] = v
 
-
             # rebind the data to the formset
             student_formset = StudentFormset(
                 student_formset.data, prefix="student"
             )
-            # student_formset.is_valid()
-    #
-    #
+
     zipped_formsets = zip(student_formset, supervisor_formsets)
-    #
-    # for (x, y) in zipped_formsets:
-    #     pass
-    #
+
     for (student_form, supervisor_formset) in zipped_formsets:
         student_form.supervisor_formset = supervisor_formset
-
-        supervisor_formset.student_form = student_form
-
+        # supervisor_formset.student_form = student_form
 
     # print "zipped length:", len(zipped_formsets)
     return shortcuts.render_to_response(

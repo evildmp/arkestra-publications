@@ -1,0 +1,36 @@
+{% extends "contacts_and_people/person.html" %}
+{% load publications_tags %}
+
+{% block meta %}
+	<meta name="description" content="Research publications by {{ person}}, {{ home_role.role }}{% if person.override_entity %}, {{ home_role.entity}}{% endif %}"/>
+{% endblock meta %}
+
+{% block title %}
+	<title>{{ person }} - Publications </title>
+{% endblock %}
+{% block page_title %}
+	<h{{PAGE_TITLE_HEADING_LEVEL}} class="name">{{ person}} - Publications</h{{PAGE_TITLE_HEADING_LEVEL}}>
+{% endblock page_title %}
+
+{% block person_information %}
+    <div>
+        {% if person.researcher.supervisor.current_students %}
+        <h3>Current research students</h3>
+        <ul>{% for student in person.researcher.supervisor.current_students %}
+            <li><p><a href="{{ student.get_absolute_url }}">{{ student }}</a>,
+                {{ student.programme }} ({{ student.start_date|date:"Y" }})</p>
+                <p><cite>{{ student.thesis }}</cite></p>
+            </li>
+        {% endfor %}</ul>
+        {% endif %}
+        {% if person.researcher.supervisor.previous_students %}
+        <h3>Previous research students</h3>
+        <ul>{% for student in person.researcher.supervisor.previous_students %}
+            <li><p><a href="{{ student.get_absolute_url }}">{{ student }}</a>,
+                {{ student.programme }} ({{ student.start_date|date:"Y" }})</p>
+                <p><cite>{{ student.thesis }}</cite></p>
+            </li>
+        {% endfor %}</ul>
+        {% endif %}
+    </div>
+{% endblock person_information %}

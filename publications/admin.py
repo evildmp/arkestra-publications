@@ -44,13 +44,6 @@ class ResearcherForm(forms.ModelForm):
 
 
 class ResearcherAdmin(AutocompleteMixin, ModelAdminWithTabsAndCMSPlaceholder):
-    # def get_form(self, request, obj=None, **kwargs):
-    #     form_class = super(ResearcherAdmin, self).get_form(request, obj,
-    # **kwargs)
-    #
-    #     print "***", form_class
-    #     return form_class
-
     def _media(self):
         return super(
             AutocompleteMixin,
@@ -88,26 +81,70 @@ class ResearcherAdmin(AutocompleteMixin, ModelAdminWithTabsAndCMSPlaceholder):
     form = ResearcherForm
     ordering = ('person__surname',)
     search_fields = (
-        'person__surname', 'person__given_name',
+        'person__surname',
+        'person__given_name',
         'person__institutional_username'
-        )
+    )
     related_search_fields = {'person': ('surname', 'given_name')}
-
-    # def formfield_for_dbfield(self, db_field, **kwargs):
-    #     return ForeignKeySearchInput.overridden_formfield_for_dbfield(self,
-    # db_field, ResearcherAdmin, **kwargs)
-
-
-    # class Media:
-    #     js = (
-    #         '/media/javascript/jquery/jquery.js',
-    #         '/media/javascript/jquery/ui/ui.core.js',
-    #         '/media/javascript/jquery/ui/ui.tabs.js',
-    #     )
 
 
 admin.site.register(models.Researcher, ResearcherAdmin)
-admin.site.register(models.Student)
+
+
+class SupervisionInline(AutocompleteMixin, admin.TabularInline):
+    model = models.Supervision
+    search_fields = [
+        'researcher__person__surname',
+        'researcher__person__given_name'
+    ]
+    # it doesn't seem to be necessary to specify the search fields:
+    related_search_fields = {
+        "student": [],
+        "supervisor": [],
+    }
+
+
+class SupervisionAdmin(AutocompleteMixin, admin.ModelAdmin):
+    model = models.Supervision
+    search_fields = [
+        'student__researcher__person__surname',
+        'student__researcher__person__given_name',
+        'supervisor__researcher__person__surname',
+        'supervisor__researcher__person__given_name'
+        ]
+    list_display = ['student', 'supervisor']
+    # it doesn't seem to be necessary to specify the search fields:
+    related_search_fields = {
+        'student': [],
+        'supervisor': []
+        }
+
+# this admin class is not registered - here for debugging convenience
+# admin.site.register(models.Supervision, SupervisionAdmin)
+
+
+class StudentAdmin(AutocompleteMixin, admin.ModelAdmin):
+    search_fields = (
+        'researcher__person__surname',
+        'researcher__person__given_name',
+        'researcher__person__institutional_username'
+        )
+    related_search_fields = {'researcher': ('surname', 'given_name')}
+    inlines = [SupervisionInline]
+
+
+admin.site.register(models.Student, StudentAdmin)
+
+
+class SupervisorAdmin(AutocompleteMixin, admin.ModelAdmin):
+    search_fields = (
+        'researcher__person__surname', 'researcher__person__given_name',
+        'researcher__person__institutional_username'
+        )
+    related_search_fields = {'researcher': ('surname', 'given_name')}
+    inlines = [SupervisionInline]
+
+admin.site.register(models.Supervisor, SupervisorAdmin)
 
 
 class ResearcherInlineForm(forms.ModelForm):

@@ -42,7 +42,6 @@ var django = {
                             <span class="inline label">Select person:</span>
                             {{ form.person }}
                             {{ form.person.errors }}
-                            {% if form.initial.matches != None %}({{ form.initial.matches }}){% endif %}
                             {% if form.person.value %}
                             <p class="help">
                                 <a  href="{% url admin:contacts_and_people_person_change form.person.value %}"
@@ -66,13 +65,25 @@ var django = {
                             {{ form.slug }}
                             {{ form.slug.errors }}
                         </div>
-                        {% if form.requires_confirmation %}
+                        <div class="field-box">
+                            {{ form.email }}
+                            {{ form.email.errors }}
+                        </div>
+                        <div class="field-box">
+                            {{ form.username }}
+                            {{ form.username.errors }}
+                        </div>
+                        {% if form.requires_confirmation and not form.all_status == "all-already-exists" %}
                             <div>
                                 <label for="id_create">{{ form.create.label }}:</label>
                                 {{ form.create }}
                             </div>
                         {% endif %}
+                        {% if form.initial.matches %}
+                            <div class="information">{{ form.initial.matches }}</div>
+                        {% endif %}
                     </div>
+
                     <div class="form-row">
                         <div class="field-box">
                             {{ form.programme }}
@@ -98,6 +109,10 @@ var django = {
                         <div class="field-box">
                             {{ form.student_id }}
                             {{ form.student_id.errors }}
+                        </div>
+                        <div class="field-box">
+                            {{ form.start_date }}
+                            {{ form.start_date.errors }}
                         </div>
                     </div>
 
@@ -156,6 +171,10 @@ var django = {
                                                     {{ supervisor.create }}
                                                 </div>
                                             {% endif %}
+                                            {% if supervisor.initial.matches %}
+                                                <div class="information">{{ supervisor.initial.matches }}</div>
+                                            {% endif %}
+
                                         </div>
 
                                     </li>

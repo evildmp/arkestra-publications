@@ -8,36 +8,34 @@ from django.template.defaultfilters import slugify
 
 from contacts_and_people.models import Person, Entity
 
-from models import Researcher, Student
+from models import Student
 
 import autocomplete_light
 
 
 class PersonAutocomplete(autocomplete_light.AutocompleteModelBase):
     search_fields = ['given_name', 'surname']
+    limit_choices = 1000
 
 
 class EntityAutocomplete(autocomplete_light.AutocompleteModelBase):
     search_fields = ['name', 'short_name']
     choices = Entity.objects.filter(abstract_entity=False)
-
-
-class ResearcherAutocomplete(autocomplete_light.AutocompleteModelBase):
-    # this seems to cause the Autocomplete to search on Person,
-    # rather than on Researcher:
-    search_fields = ['person__given_name', 'person__surname']
-    choices = Researcher.objects.filter(publishes=True)
+    limit_choices = 1000
 
 
 autocomplete_light.register(Person, PersonAutocomplete)
 autocomplete_light.register(Entity, EntityAutocomplete)
-autocomplete_light.register(Researcher, ResearcherAutocomplete)
 
 
 class DocumentForm(forms.Form):
     docfile = forms.FileField(
         label='Select a file',
-        help_text='max. 42 megabytes'
+        help_text="""
+        Upload a CSV file. Required column headings are: student_id, surname,
+        given_name, email, username, programme, entity, start_date, thesis,
+        supervisor_title, supervisor_surname, supervisor_given_name
+        """
     )
 
 
@@ -137,15 +135,19 @@ class PersonFormMixin(forms.Form):
                 given_name=given_name,
                 surname=surname,
                 )
+            matches = existing_people.count()
             if existing_people.count() == 0:
-                print "No matching Persons found"
+                self.initial["matches"] = "No matches for name '%s %s'" % (
+                    given_name, surname
+                    )
             elif existing_people.count() == 1:
-                print "One matching Persons found"
                 # since there is only one match, pre-fill the researcher
                 # field
                 person = existing_people[0]
             elif existing_people.count() > 1:
-                print "Matches multiple Persons"
+                self.initial["matches"] = "Name '%s %s' matches %s Persons" % (
+                    given_name, surname, matches
+                    )
 
             self.cleaned_data["person"] = person
 
@@ -186,15 +188,22 @@ class PersonFormMixin(forms.Form):
 
         else:
             slug = slug or slugify(name)
-            print "slug",  slug
-
-            index = 1
-            while Person.objects.filter(slug=slug):
-                slug_base = slug
-                slug = slug_base + str(index)
-                index += 1
 
         return slug
+
+    def clean_email(self):
+        person = self.cleaned_data.get("person")
+        email = self.cleaned_data.get("email")
+        if not person and not email:
+            raise forms.ValidationError("Required")
+        return email
+
+    def clean_username(self):
+        person = self.cleaned_data.get("person")
+        username = self.cleaned_data.get("username")
+        if not person and not username:
+            raise forms.ValidationError("Required")
+        return username
 
     def clean_entity(self):
         person = self.cleaned_data.get("person")
@@ -252,7 +261,38 @@ SupervisorFormset = forms.formsets.formset_factory(
 
 
 class StudentForm(PersonFormMixin, forms.Form):
-    student_id = forms.IntegerField(
+    email = forms.EmailField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Email address',
+            'size': '8'
+            }
+        ),
+    )
+    username = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'placeholder': 'Username'}),
+    )
+    start_date = forms.DateField(
+        widget=forms.DateInput(attrs={
+            'placeholder': 'Start date yyyy-mm-dd',
+            'size': '25',
+            }
+        ),
+        input_formats=[
+            '%Y-%m-%d',       # '2006-10-25'
+            '%d/%m/%Y',       # '25/10/2006'
+            '%d/%m/%y',       # '25/10/06'
+            '%b %d %Y',       # 'Oct 25 2006'
+            '%b %d, %Y',      # 'Oct 25, 2006'
+            '%d %b %Y',       # '25 Oct 2006'
+            '%d %b, %Y',      # '25 Oct, 2006'
+            '%B %d %Y',       # 'October 25 2006'
+            '%B %d, %Y',      # 'October 25, 2006'
+            '%d %B %Y',       # '25 October 2006'
+            '%d %B, %Y'],     # '25 October, 2006'
+    )
+    student_id = forms.CharField(
         widget=forms.TextInput(
             attrs={
                 'size': '8',
@@ -281,9 +321,8 @@ class StudentForm(PersonFormMixin, forms.Form):
         )
 
     def all_status(self):
-
         if self.already_exists():
-            return "already-exists"
+            return "all-already-exists"
         items = [s for s in self.supervisor_formset] + [self]
         if not all([s.is_valid() for s in items]):
             return "all-invalid"
@@ -305,12 +344,20 @@ class StudentForm(PersonFormMixin, forms.Form):
             if Student.objects.filter(student_id=student_id):
                 return True
 
-
     def is_ready_to_save(self):
 
-        if self.is_valid() and self.cleaned_data and self.supervisor_formset.is_valid() and not self.already_exists():
+        if (
+            self.is_valid() and self.cleaned_data and
+            self.supervisor_formset.is_valid() and not self.already_exists()
+        ):
             items = [self] + [s for s in self.supervisor_formset]
             return all([s.is_ready() for s in items if s.cleaned_data])
+
+    def clean_entity(self):
+        entity = self.cleaned_data.get("entity")
+        if not entity:
+            raise forms.ValidationError("Required")
+        return entity
 
     def full_clean(self):
         """
@@ -343,7 +390,6 @@ def csv_to_list(rows):
     students = {}
 
     for row in [row for row in rows if row]:
-        # print row
         # each row gets a unique key
         key = row["student_id"]
 
@@ -444,28 +490,6 @@ def process_formset(unique_students, student_formset):
         # supervisors
         student["supervisors"] = student.get("supervisors") or []
         student["supervisor_list"] = student.get("supervisor_list") or []
-
-        # for supervisor in student["supervisor_list"]:
-        #     if type(supervisor.get("supervisor")) is not Researcher:
-        #
-        #         print supervisor["surname"], supervisor["given_name"]
-        #         existing_supervisors = Researcher.objects.filter(
-        #             person__surname=supervisor["surname"],
-        #             person__given_name=supervisor["given_name"],
-        #             )
-        #
-        #         supervisor["person"] = None
-        #         if existing_supervisors.count() == 0:
-        #             supervisor["matches"] = "No matching Researchers found"
-        #         elif existing_supervisors.count() == 1:
-        #             supervisor["matches"] = "One matching Researcher found"
-        #             # since there is only one match, pre-fill the researcher
-        #             # field
-        #             supervisor["person"] = existing_supervisors[0]
-        #             student["supervisors"].append(existing_supervisors[0])
-        #             # student["supervisors"] = "fred"
-        #         elif existing_supervisors.count() > 1:
-        #             supervisor["matches"] = "Matches multiple Researchers"
 
         supervisor_formset = SupervisorFormset(
             initial=student["supervisor_list"],

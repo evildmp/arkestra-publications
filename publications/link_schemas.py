@@ -1,9 +1,19 @@
-from .models import BibliographicRecord, publication_kinds
+from django.utils.encoding import smart_unicode
+
+from easy_thumbnails.files import get_thumbnailer
+
+from widgetry.views import search, SearchItemWrapper
+
 from links import schema, LinkWrapper
+
+from .models import (
+    BibliographicRecord, publication_kinds, Researcher, Student, Supervisor
+    )
+from .admin import ResearcherAdmin, SupervisionInline
 
 
 class BibliographicRecordWrapper(LinkWrapper):
-    search_fields=["title", "authors"]
+    search_fields = ["title", "authors"]
     block_level_item_template = "publications/publications_list_item.html"
     special_attributes = [
         "authors",
@@ -48,7 +58,7 @@ class BibliographicRecordWrapper(LinkWrapper):
 
         if self.obj.publication.type in [
             "journal-article", "conference-proceeding", "other"
-            ]:
+        ]:
             return "%s in %s, %s" % (
                 kind,
                 self.obj.journal,
@@ -64,7 +74,7 @@ class BibliographicRecordWrapper(LinkWrapper):
 
         elif self.obj.publication.type in [
             "internet-publication", "patent", "report"
-            ]:
+        ]:
             return "%s, %s<br>%s" % (
                 kind,
                 self.obj.get_publication_date(),
@@ -106,9 +116,6 @@ class BibliographicRecordWrapper(LinkWrapper):
     def publisher(self):
         return self.obj.publisher
 
-    def get_publication_date(self):
-        return self.obj.get_publication_date()
-
     def get_start_date(self):
         return self.obj.get_start_date()
 
@@ -121,4 +128,68 @@ class BibliographicRecordWrapper(LinkWrapper):
     def abstract(self):
         return self.obj.abstract
 
+
 schema.register_wrapper(BibliographicRecord, BibliographicRecordWrapper)
+
+
+class ResearcherWrapper(SearchItemWrapper):
+    search_fields = ResearcherAdmin.search_fields
+
+    def summary(self):
+        data = []
+        data.append(smart_unicode(self.obj.person.get_role))
+        data.append(smart_unicode(self.obj.person.get_entity))
+        return ', '.join(data)
+
+    def thumbnail_url(self):
+        try:
+            size = self.THUMBNAIL_SIZE
+            source = self.obj.person.image.file
+            return get_thumbnailer(source).get_thumbnail({
+                'subject_location': u'',
+                'upscale': True,
+                'crop': True,
+                'size': (size, size)
+            }).url
+        except Exception, e:
+            print "Error in personwrapper", e
+            url = None
+        return url
+
+    def image(self):
+        return self.obj.person.image
+
+
+search.register_wrapper(Researcher, ResearcherWrapper)
+
+
+class StudentWrapper(SearchItemWrapper):
+    search_fields = SupervisionInline.search_fields
+
+    def summary(self):
+        data = []
+        data.append(smart_unicode(self.obj.researcher.person.get_role))
+        data.append(smart_unicode(self.obj.researcher.person.get_entity))
+        return ', '.join(data)
+
+    def thumbnail_url(self):
+        try:
+            size = self.THUMBNAIL_SIZE
+            source = self.obj.researcher.person.image.file
+            return get_thumbnailer(source).get_thumbnail({
+                'subject_location': u'',
+                'upscale': True,
+                'crop': True,
+                'size': (size, size)
+            }).url
+        except Exception, e:
+            print "Error in personwrapper", e
+            url = None
+        return url
+
+    def image(self):
+        return self.obj.researcher.person.image
+
+# registered with search, not schema: we want autocomplete, not links
+search.register_wrapper(Student, StudentWrapper)
+search.register_wrapper(Supervisor, StudentWrapper)

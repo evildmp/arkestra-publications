@@ -8,18 +8,20 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding model 'Academic'
-        db.create_table('publications_academic', (
+        # Adding model 'Supervisor'
+        db.create_table('publications_supervisor', (
             ('researcher', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['publications.Researcher'], unique=True, primary_key=True)),
         ))
-        db.send_create_signal('publications', ['Academic'])
+        db.send_create_signal('publications', ['Supervisor'])
 
         # Adding model 'Student'
         db.create_table('publications_student', (
             ('researcher', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['publications.Researcher'], unique=True, primary_key=True)),
             ('thesis', self.gf('django.db.models.fields.CharField')(max_length=512)),
             ('programme', self.gf('django.db.models.fields.CharField')(max_length=20)),
-            ('student_id', self.gf('django.db.models.fields.PositiveIntegerField')(unique=True)),
+            ('student_id', self.gf('django.db.models.fields.CharField')(unique=True, max_length=8)),
+            ('completed', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('start_date', self.gf('django.db.models.fields.DateField')()),
         ))
         db.send_create_signal('publications', ['Student'])
 
@@ -27,14 +29,14 @@ class Migration(SchemaMigration):
         db.create_table('publications_supervision', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('student', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['publications.Student'])),
-            ('supervisor', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['publications.Academic'])),
+            ('supervisor', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['publications.Supervisor'])),
         ))
         db.send_create_signal('publications', ['Supervision'])
 
 
     def backwards(self, orm):
-        # Deleting model 'Academic'
-        db.delete_table('publications_academic')
+        # Deleting model 'Supervisor'
+        db.delete_table('publications_supervisor')
 
         # Deleting model 'Student'
         db.delete_table('publications_student')
@@ -76,7 +78,7 @@ class Migration(SchemaMigration):
         'cms.cmsplugin': {
             'Meta': {'object_name': 'CMSPlugin'},
             'changed_date': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'creation_date': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2014, 6, 26, 0, 0)'}),
+            'creation_date': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2014, 6, 30, 0, 0)'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'language': ('django.db.models.fields.CharField', [], {'max_length': '15', 'db_index': 'True'}),
             'level': ('django.db.models.fields.PositiveIntegerField', [], {'db_index': 'True'}),
@@ -322,10 +324,6 @@ class Migration(SchemaMigration):
             'name': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
             'scheme': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '50'})
         },
-        'publications.academic': {
-            'Meta': {'object_name': 'Academic'},
-            'researcher': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['publications.Researcher']", 'unique': 'True', 'primary_key': 'True'})
-        },
         'publications.authored': {
             'Meta': {'object_name': 'Authored'},
             'bibliographic_record': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'authored'", 'to': "orm['publications.BibliographicRecord']"}),
@@ -433,17 +431,23 @@ class Migration(SchemaMigration):
         },
         'publications.student': {
             'Meta': {'object_name': 'Student'},
+            'completed': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'programme': ('django.db.models.fields.CharField', [], {'max_length': '20'}),
             'researcher': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['publications.Researcher']", 'unique': 'True', 'primary_key': 'True'}),
-            'student_id': ('django.db.models.fields.PositiveIntegerField', [], {'unique': 'True'}),
-            'supervisors': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['publications.Academic']", 'through': "orm['publications.Supervision']", 'symmetrical': 'False'}),
+            'start_date': ('django.db.models.fields.DateField', [], {}),
+            'student_id': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '8'}),
+            'supervisors': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['publications.Supervisor']", 'through': "orm['publications.Supervision']", 'symmetrical': 'False'}),
             'thesis': ('django.db.models.fields.CharField', [], {'max_length': '512'})
         },
         'publications.supervision': {
             'Meta': {'object_name': 'Supervision'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'student': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['publications.Student']"}),
-            'supervisor': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['publications.Academic']"})
+            'supervisor': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['publications.Supervisor']"})
+        },
+        'publications.supervisor': {
+            'Meta': {'object_name': 'Supervisor'},
+            'researcher': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['publications.Researcher']", 'unique': 'True', 'primary_key': 'True'})
         },
         'sites.site': {
             'Meta': {'ordering': "('domain',)", 'object_name': 'Site', 'db_table': "'django_site'"},
