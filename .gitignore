@@ -38,3 +38,4 @@ _design
 _content
 _tmp
 dist
+_build
