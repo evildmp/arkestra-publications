@@ -315,11 +315,19 @@ def csv_dump(request, year):
     response['Content-Disposition'] = 'attachment; filename="publications.csv"'
 
     attrs = [
+        "first_author",
         "authors",
         "title",
         "publication_date",
         "journal",
-        "volume"
+        "volume",
+        "name_of_conference",
+        "times_cited",
+        "awarded_date",
+        "filed_date",
+        "start_date",
+        "finish_date",
+        "doi",
         ]
 
     pubs = BibliographicRecord.objects.filter(publication_date__contains=year)
