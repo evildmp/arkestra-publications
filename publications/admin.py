@@ -118,6 +118,7 @@ class SupervisionAdmin(AutocompleteMixin, admin.ModelAdmin):
         'student': [],
         'supervisor': []
         }
+    ordering = ('student__researcher__person__surname',)
 
 # this admin class is not registered - here for debugging convenience
 # admin.site.register(models.Supervision, SupervisionAdmin)
@@ -131,6 +132,7 @@ class StudentAdmin(AutocompleteMixin, admin.ModelAdmin):
         )
     related_search_fields = {'researcher': ('surname', 'given_name')}
     inlines = [SupervisionInline]
+    ordering = ('researcher__person__surname',)
 
 
 admin.site.register(models.Student, StudentAdmin)
@@ -143,6 +145,7 @@ class SupervisorAdmin(AutocompleteMixin, admin.ModelAdmin):
         )
     related_search_fields = {'researcher': ('surname', 'given_name')}
     inlines = [SupervisionInline]
+    ordering = ('researcher__person__surname',)
 
 admin.site.register(models.Supervisor, SupervisorAdmin)
 

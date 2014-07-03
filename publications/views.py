@@ -204,7 +204,7 @@ def upload(request):
                     # get or create a Researcher for the Person
                     researcher, created = Researcher.objects.get_or_create(
                         person=person,
-                        defaults={'publishes': True}
+                        defaults={'publishes': True, "symplectic_access": True}
                         )
 
                     # get or create a Student for the Researcher
