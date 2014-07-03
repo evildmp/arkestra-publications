@@ -245,10 +245,10 @@ class BaseSupervisorFormset(BaseFormSet):
         # how many supervisor forms?
         f = [
             form for form in self.forms if form.is_valid()
-            and form.cleaned_data.get("supervisor")
+            and form.is_ready()
             ]
 
-        if form.cleaned_data.get("surname") and len(f) < 1:
+        if len(f) < 1:
             raise forms.ValidationError(
                 "A student must have at least one supervisor."
                 )
@@ -265,13 +265,13 @@ class StudentForm(PersonFormMixin, forms.Form):
         required=False,
         widget=forms.TextInput(attrs={
             'placeholder': 'Email address',
-            'size': '8'
+            'size': '20'
             }
         ),
     )
     username = forms.CharField(
         required=False,
-        widget=forms.TextInput(attrs={'placeholder': 'Username'}),
+        widget=forms.TextInput(attrs={'size': '8', 'placeholder': 'Username'}),
     )
     start_date = forms.DateField(
         widget=forms.DateInput(attrs={
@@ -459,12 +459,12 @@ def convert_to_formset(unique_students):
         #         student["matches"] = "Multiple matching Persons found"
 
         # do we have an actual entity saved already?
-        if type(student["entity"]) is not Entity:
+        if type(student.get("entity")) is not Entity:
 
             # check if the entity matches one from the database
             entities = Entity.objects.filter(
                 abstract_entity=False,
-                short_name=student["entity"]
+                short_name=student.get("entity")
                 )
 
             # if there is only one match, pre-fill the entity field

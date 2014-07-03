@@ -24,7 +24,7 @@ urlpatterns = patterns('',
         ),
 
     url(
-        r"^upload/$", views.upload, name="upload"),
+        r"^upload-students/$", views.upload_students, name="upload-students"),
 
     url(r'^publications-autocomplete/', include('autocomplete_light.urls')),
 )
