@@ -138,7 +138,7 @@ class Student(models.Model):
         Supervisor,
         through="Supervision"
         )
-    student_id = models.CharField(unique=True, max_length=8)
+    student_id = models.CharField(unique=True, max_length=12)
     completed = models.BooleanField(
         help_text="Student has completed their studies"
         )
