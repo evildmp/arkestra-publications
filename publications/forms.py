@@ -5,6 +5,7 @@ from django import forms
 from django.forms.util import ErrorDict
 from django.forms.formsets import BaseFormSet
 from django.template.defaultfilters import slugify
+from django.core.exceptions import ValidationError
 
 from contacts_and_people.models import Person, Entity
 
@@ -295,7 +296,7 @@ class StudentForm(PersonFormMixin, forms.Form):
     student_id = forms.CharField(
         widget=forms.TextInput(
             attrs={
-                'size': '8',
+                'size': '12',
                 'placeholder': 'Student ID'
             },
         )
@@ -391,7 +392,10 @@ def csv_to_list(rows):
 
     for row in [row for row in rows if row]:
         # each row gets a unique key
-        key = row["student_id"]
+        key = row.get("student_id")
+        if not key:
+            raise ValidationError("CSV file lacks 'student_id' column")
+
 
         # bundle up the supervisor fields
         supervisor_dict = {
