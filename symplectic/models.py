@@ -2,7 +2,7 @@
 
 from datetime import datetime
 import urllib
-from elementtree.ElementTree import ElementTree, Element, SubElement, XML
+from xml.etree.ElementTree import ElementTree, Element, SubElement, XML
 from xml.parsers.expat import ExpatError
 import urllib2
 import os
